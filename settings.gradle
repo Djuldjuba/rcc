@@ -1,0 +1,4 @@
+rootProject.name = 'rcc'
+include 'rcc-api'
+include 'rcc-auth'
+include 'rcc-e2e'
