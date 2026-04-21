@@ -1,0 +1,24 @@
+package io.student.rcc.page;
+
+import com.codeborne.selenide.SelenideElement;
+
+import static com.codeborne.selenide.Condition.visible;
+import static com.codeborne.selenide.Selenide.$x;
+
+public class PaintingsPage extends BasePage {
+
+    private final SelenideElement addPaintingBtn = $x("//button[.='Добавить картину']");
+    private final SelenideElement modalFormAddPainting = $x("//form");
+    private final SelenideElement closeModalBtn = $x("//button[.='Закрыть']");
+
+    public PaintingsPage clickAddPainting() {
+        addPaintingBtn.click();
+        modalFormAddPainting.shouldBe(visible);
+        return new PaintingsPage();
+    }
+
+    public PaintingsPage closeModal() {
+        closeModalBtn.click();
+        return this;
+    }
+}
