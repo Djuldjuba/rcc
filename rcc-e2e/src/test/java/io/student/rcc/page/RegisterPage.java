@@ -1,21 +1,20 @@
 package io.student.rcc.page;
 
 import com.codeborne.selenide.SelenideElement;
-import org.apache.kafka.common.security.auth.Login;
 
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selenide.*;
+import static com.codeborne.selenide.Selenide.$;
 
 public class RegisterPage {
 
-    private final SelenideElement usernameInput = $x("//*[@id='username']");
-    private final SelenideElement passwordInput = $x("//*[@id='password']");
-    private final SelenideElement submitPasswordBtn = $x("//*[@id='passwordSubmit']");
-    private final SelenideElement registerBtn = $x("//*[@class='form__submit']");
-    private final SelenideElement usernameErrorText = $x("//*[@class='form__error error__username']");
-    private final SelenideElement passwordErrorText = $x("//*[@class='form__error error__password']");
-    private final SelenideElement welcomeTitle = $x("//p[@class='form__subheader']");
+    private final SelenideElement usernameInput = $("#username");
+    private final SelenideElement passwordInput = $("#password");
+    private final SelenideElement submitPasswordBtn = $("#passwordSubmit");
+    private final SelenideElement registerBtn = $(".form__submit");
+    private final SelenideElement usernameErrorText = $(".form__error.error__username");
+    private final SelenideElement passwordErrorText = $(".form__error.error__password");
+    private final SelenideElement welcomeTitle = $("p.form__subheader");
 
     public RegisterPage setUsername(String username) {
         usernameInput.setValue(username);

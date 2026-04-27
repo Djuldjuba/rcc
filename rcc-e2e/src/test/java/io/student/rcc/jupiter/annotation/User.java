@@ -11,4 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @Target(ElementType.METHOD)
 @ExtendWith(UserExtension.class)
 public @interface User {
+    String password() default "pass";
+    boolean enabled() default true;
 }

@@ -9,7 +9,11 @@ import java.util.UUID;
 
 import io.student.rcc.utils.RandomUserDataUtils;
 import org.jspecify.annotations.Nullable;
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.platform.commons.support.AnnotationSupport;
 
 public class UserExtension implements BeforeEachCallback, ParameterResolver {
@@ -26,17 +30,26 @@ public class UserExtension implements BeforeEachCallback, ParameterResolver {
                 context.getRequiredTestMethod(),
                 User.class
         ).ifPresent(annotation -> {
+                    UUID id = UUID.randomUUID();
+                    String username = RandomUserDataUtils.getRandomUserName();
+                    String firstname = RandomUserDataUtils.getRandomFirstName();
+                    String lastName = RandomUserDataUtils.getRandomLastName();
+                    String avatar = null;
+
             UserJson user = new UserJson(
-                    UUID.randomUUID(),
-                    RandomUserDataUtils.getRandomUserName(),
-                    RandomUserDataUtils.getRandomFirstName(),
-                    RandomUserDataUtils.getRandomLastName(),
-                    null
+                    id,
+                    username,
+                    firstname,
+                    lastName,
+                    avatar
             );
+
+            usersClient.createUser(user.username(), DEFAULT_PASSWORD);
+
 
             context.getStore(NAMESPACE).put(
                     context.getUniqueId(),
-                    usersClient.createUser(user.username(), DEFAULT_PASSWORD)
+                    user
             );
         });
     }
@@ -44,12 +57,17 @@ public class UserExtension implements BeforeEachCallback, ParameterResolver {
     @Override
     public boolean supportsParameter(ParameterContext parameterContext,
                                      ExtensionContext extensionContext) throws ParameterResolutionException {
-        return parameterContext.getParameter().getType().equals(UserJson.class);
+        return parameterContext.getParameter().getType().equals(UserJson.class)
+                && AnnotationSupport.isAnnotated(extensionContext.getRequiredTestMethod(), User.class);
     }
 
     @Override
     public @Nullable Object resolveParameter(ParameterContext parameterContext,
                                              ExtensionContext extensionContext) throws ParameterResolutionException {
         return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), UserJson.class);
+    }
+
+    public static String getDefaultPassword() {
+        return DEFAULT_PASSWORD;
     }
 }

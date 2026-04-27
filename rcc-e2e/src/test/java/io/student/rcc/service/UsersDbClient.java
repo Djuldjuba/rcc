@@ -11,24 +11,26 @@ import java.util.UUID;
 
 public class UsersDbClient implements UsersClient {
 
-    private static Config CFG = Config.getInstance();
+    private static final Config CFG = Config.getInstance();
     private final PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    private final JdbcTemplate jdbcTemplate;
 
-    @Override
-    public UserJson createUser(String username, String password) {
-        final JdbcTemplate jdbcTemplate = new JdbcTemplate(
+    public UsersDbClient() {
+        this.jdbcTemplate = new JdbcTemplate(
                 new SingleConnectionDataSource(
                         CFG.userJdbcUrl(),
                         CFG.dbUserName(),
                         CFG.dbPassword(),
-                        false
+                        true
                 )
         );
+    }
 
+    @Override
+    public UserJson createUser(String username, String password) {
         final UUID userId = UUID.randomUUID();
 
-        // Используем UUID_TO_BIN для конвертации UUID в binary(16)
-        jdbcTemplate.update(
+        this.jdbcTemplate.update(
                 "INSERT INTO `user` (id, username, `password`, enabled, account_non_expired, account_non_locked, credentials_non_expired) "
                         + "VALUES (UUID_TO_BIN(?, true), ?, ?, ?, ?, ?, ?)",
                 userId.toString(),
