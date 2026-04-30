@@ -53,8 +53,8 @@ public class LoginTest {
                 .login(userJson.username(), getDefaultPassword())
                 .checkThatUserIsAuthorized()
                 .clickArtists()
-                .clickAddArtists()
-                .shouldVisibleArtistsModal()
+                .clickAddArtist()
+                .shouldDisplayArtistModal()
                 .closeModal();
     }
 
@@ -97,6 +97,7 @@ public class LoginTest {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickLoginButton()
                 .unsuccessLogin(userJson.username(), getDefaultPassword() + "1")
+                .clickSubmitButton()
                 .checkUnsuccessLogin();
     }
 }

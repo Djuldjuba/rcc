@@ -22,7 +22,7 @@ public class UserExtension implements BeforeEachCallback, ParameterResolver {
             ExtensionContext.Namespace.create(UserExtension.class);
 
     private final UsersClient usersClient = new UsersDbClient();
-    private final static String DEFAULT_PASSWORD = "pass";
+    private static final String DEFAULT_PASSWORD = "pass";
 
     @Override
     public void beforeEach(ExtensionContext context) {

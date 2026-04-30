@@ -23,6 +23,10 @@ public class LoginPage {
     public LoginPage unsuccessLogin(String username, String password) {
         usernameInput.setValue(username);
         passwordInput.setValue(password);
+        return this;
+    }
+
+    public LoginPage clickSubmitButton() {
         submitBtn.click();
         return this;
     }
