@@ -7,8 +7,8 @@
 
     <persistence-unit name="rococo-auth" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-        <class>rcc.data.entity.AuthUserEntity</class>
-        <class>rcc.data.entity.AuthorityEntity</class>
+        <class>io.student.rococo.data.entity.AuthUserEntity</class>
+        <class>io.student.rococo.data.entity.AuthorityEntity</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
@@ -25,11 +25,11 @@
 
     <persistence-unit name="rococo-api" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
-        <class>rcc.data.entity.UserEntity</class>
-        <class>rcc.data.entity.CountryEntity</class>
-        <class>rcc.data.entity.MuseumEntity</class>
-        <class>rcc.data.entity.ArtistEntity</class>
-        <class>rcc.data.entity.PaintingEntity</class>
+        <class>io.student.rococo.data.entity.UserEntity</class>
+        <class>io.student.rococo.data.entity.CountryEntity</class>
+        <class>io.student.rococo.data.entity.MuseumEntity</class>
+        <class>io.student.rococo.data.entity.ArtistEntity</class>
+        <class>io.student.rococo.data.entity.PaintingEntity</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
