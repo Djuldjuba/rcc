@@ -33,6 +33,7 @@ ext {
     jakartaPersistenceVersion = '3.1.0'
     jakartaTransactionVersion = '2.0.1'
     hikariVersion = '5.0.1'
+    ashotVersion = '1.5.4'
 }
 
 def allureVersion = '2.32.0'
@@ -98,6 +99,7 @@ dependencies {
     }
     // WEB
     testImplementation "com.codeborne:selenide:${selenideVersion}"
+    testImplementation "ru.yandex.qatools.ashot:ashot:${ashotVersion}"
     // Utils
     testImplementation("com.github.javafaker:javafaker:${fakerVersion}") {
         exclude group: 'org.yaml'

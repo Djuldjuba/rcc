@@ -1,11 +1,21 @@
 package io.student.rococo.page;
 
+import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import io.qameta.allure.Step;
+import io.student.rococo.jupiter.extensions.ScreenShotTestExtension;
+import io.student.rococo.utils.ScreenDiffResult;
+
+import javax.annotation.Nonnull;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Objects;
 
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ProfilePage extends BasePage {
 
@@ -32,8 +42,8 @@ public class ProfilePage extends BasePage {
     }
 
     @Step("Добавить изображение для аватара")
-    public ProfilePage addFileAvatar() {
-        chooseFileInput.uploadFromClasspath("files/avatar.jpg");
+    public ProfilePage addFileAvatar(String path) {
+        chooseFileInput.uploadFromClasspath(path);
         return this;
     }
 
@@ -72,5 +82,19 @@ public class ProfilePage extends BasePage {
     public MainPage clickUpdateProfile() {
         updateProfileBtn.click();
         return new MainPage();
+    }
+
+    @Step("Check photo")
+    @Nonnull
+    public ProfilePage checkPhoto(BufferedImage expected) throws IOException {
+        Selenide.sleep(1000);
+        BufferedImage actualImage = ImageIO.read(Objects.requireNonNull(avatarIcon.screenshot()));
+        assertFalse(
+                new ScreenDiffResult(
+                        actualImage, expected
+                ),
+                ScreenShotTestExtension.ASSERT_SCREEN_MESSAGE
+        );
+        return this;
     }
 }

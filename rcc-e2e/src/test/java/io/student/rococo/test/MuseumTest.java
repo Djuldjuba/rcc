@@ -45,7 +45,7 @@ public class MuseumTest {
                 .login(testData.user().username(), getDefaultPassword())
                 .checkThatUserIsAuthorized()
                 .clickProfileIconBtn()
-                .addFileAvatar()
+                .addFileAvatar("files/avatar.png")
                 .writeName(testData.user().firstName())
                 .writeSurname(testData.user().lastName())
                 .clickUpdateProfile()
