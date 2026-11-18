@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package io.student.rcc.userdata;
+
+option java_multiple_files = true;
+option java_package = "io.student.rcc.userdata.grpc";
+option java_outer_classname = "UserdataProto";
+
+service UserdataService {
+  rpc GetCurrentUser(EmptyRequest) returns (UserResponseProto);
+  rpc UpdateUser(UpdateUserRequestProto) returns (UserResponseProto);
+}
+
+message EmptyRequest {}
+
+message UpdateUserRequestProto {
+  string firstname = 1;
+  string lastname = 2;
+  string avatar = 3;
+}
+
+message UserResponseProto {
+  string id = 1;
+  string username = 2;
+  string firstname = 3;
+  string lastname = 4;
+  string avatar = 5;
+}

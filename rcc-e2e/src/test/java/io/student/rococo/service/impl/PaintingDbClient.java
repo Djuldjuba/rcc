@@ -39,21 +39,26 @@ public class PaintingDbClient implements PaintingClient {
         PaintingJson result = xaTransactionTemplate.execute(() -> {
             UUID paintingId = painting.id() != null ? painting.id() : UUID.randomUUID();
 
-            PaintingEntity paintingEntity = painting.toEntity();
+            PaintingEntity paintingEntity = new PaintingEntity();
             paintingEntity.setId(paintingId);
-
-            if (painting.artist() != null && paintingEntity.getArtist() == null) {
-                ArtistEntity artist = getOrCreateArtist(painting.artist());
-                paintingEntity.setArtist(artist);
+            paintingEntity.setTitle(painting.title());
+            paintingEntity.setDescription(painting.description());
+            if (painting.content() != null) {
+                paintingEntity.setContent(painting.content().getBytes());
             }
 
-            if (painting.museum() != null && paintingEntity.getMuseum() == null) {
-                MuseumEntity museum = getOrCreateMuseum(painting.museum());
-                paintingEntity.setMuseum(museum);
+            if (painting.artist() != null) {
+                ArtistEntity artist = resolveArtist(painting.artist());
+                paintingEntity.setArtistId(artist.getId());
+            }
+
+            if (painting.museum() != null) {
+                MuseumEntity museum = resolveMuseum(painting.museum());
+                paintingEntity.setMuseumId(museum.getId());
             }
 
             PaintingEntity created = paintingRepository.create(paintingEntity);
-            return PaintingJson.fromEntity(created);
+            return enrich(created);
         });
 
         if (result == null) {
@@ -75,24 +80,18 @@ public class PaintingDbClient implements PaintingClient {
                 existing.setContent(painting.content().getBytes());
             }
 
-            if (painting.artist() != null && painting.artist().id() != null) {
-                artistRepository.findById(painting.artist().id())
-                        .ifPresent(existing::setArtist);
-            } else if (painting.artist() != null && painting.artist().name() != null) {
-                ArtistEntity artist = getOrCreateArtist(painting.artist());
-                existing.setArtist(artist);
+            if (painting.artist() != null) {
+                ArtistEntity artist = resolveArtist(painting.artist());
+                existing.setArtistId(artist.getId());
             }
 
-            if (painting.museum() != null && painting.museum().id() != null) {
-                museumRepository.findById(painting.museum().id())
-                        .ifPresent(existing::setMuseum);
-            } else if (painting.museum() != null && painting.museum().title() != null) {
-                MuseumEntity museum = getOrCreateMuseum(painting.museum());
-                existing.setMuseum(museum);
+            if (painting.museum() != null) {
+                MuseumEntity museum = resolveMuseum(painting.museum());
+                existing.setMuseumId(museum.getId());
             }
 
             PaintingEntity updated = paintingRepository.update(existing);
-            return PaintingJson.fromEntity(updated);
+            return enrich(updated);
         });
 
         if (result == null) {
@@ -104,39 +103,43 @@ public class PaintingDbClient implements PaintingClient {
     @Override
     @Step("Найти картину в БД по id")
     public @NonNull Optional<PaintingJson> findPaintingById(@NonNull UUID id) {
-        return paintingRepository.findById(id)
-                .map(PaintingJson::fromEntity);
+        return paintingRepository.findById(id).map(this::enrich);
     }
 
     @Override
     @Step("Найти картину в БД по названию")
     public @NonNull Optional<PaintingJson> findPaintingByTitle(@NonNull String title) {
-        return paintingRepository.findByTitle(title)
-                .map(PaintingJson::fromEntity);
+        return paintingRepository.findByTitle(title).map(this::enrich);
     }
 
     @Override
     @Step("Найти все картины в БД")
     public @NonNull List<PaintingJson> findAllPaintings() {
-        return paintingRepository.findAll().stream()
-                .map(PaintingJson::fromEntity)
-                .collect(Collectors.toList());
+        List<PaintingEntity> entities = paintingRepository.findAll();
+        if (entities == null || entities.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return entities.stream().map(this::enrich).collect(Collectors.toList());
     }
 
     @Override
     @Step("Найти все картины в БД по художнику")
     public @NonNull List<PaintingJson> findAllPaintingsByArtistId(@NonNull UUID artistId) {
-        return paintingRepository.findAllByArtistId(artistId).stream()
-                .map(PaintingJson::fromEntity)
-                .collect(Collectors.toList());
+        List<PaintingEntity> entities = paintingRepository.findAllByArtistId(artistId);
+        if (entities == null || entities.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return entities.stream().map(this::enrich).collect(Collectors.toList());
     }
 
     @Override
     @Step("Найти все картины в БД по музею")
     public @NonNull List<PaintingJson> findAllPaintingsByMuseumId(@NonNull UUID museumId) {
-        return paintingRepository.findAllByMuseumId(museumId).stream()
-                .map(PaintingJson::fromEntity)
-                .collect(Collectors.toList());
+        List<PaintingEntity> entities = paintingRepository.findAllByMuseumId(museumId);
+        if (entities == null || entities.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return entities.stream().map(this::enrich).collect(Collectors.toList());
     }
 
     @Override
@@ -157,7 +160,17 @@ public class PaintingDbClient implements PaintingClient {
         });
     }
 
-    private ArtistEntity getOrCreateArtist(ArtistJson artistJson) {
+    private PaintingJson enrich(PaintingEntity entity) {
+        ArtistEntity artist = entity.getArtistId() == null
+                ? null
+                : artistRepository.findById(entity.getArtistId()).orElse(null);
+        MuseumEntity museum = entity.getMuseumId() == null
+                ? null
+                : museumRepository.findById(entity.getMuseumId()).orElse(null);
+        return PaintingJson.fromEntity(entity, artist, museum);
+    }
+
+    private ArtistEntity resolveArtist(ArtistJson artistJson) {
         if (artistJson.id() != null) {
             return artistRepository.findById(artistJson.id())
                     .orElseThrow(() -> new RuntimeException("Artist not found: " + artistJson.id()));
@@ -174,7 +187,7 @@ public class PaintingDbClient implements PaintingClient {
         throw new RuntimeException("Artist id or name is required");
     }
 
-    private MuseumEntity getOrCreateMuseum(MuseumJson museumJson) {
+    private MuseumEntity resolveMuseum(MuseumJson museumJson) {
         if (museumJson.id() != null) {
             return museumRepository.findById(museumJson.id())
                     .orElseThrow(() -> new RuntimeException("Museum not found: " + museumJson.id()));

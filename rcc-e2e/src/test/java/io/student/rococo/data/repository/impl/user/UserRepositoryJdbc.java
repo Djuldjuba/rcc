@@ -16,7 +16,7 @@ import java.util.UUID;
 public class UserRepositoryJdbc implements UserRepository {
 
     private static final Config CFG = Config.getInstance();
-    private final DataSource dataSource = DataSources.dataSource(CFG.rococoApiUrl());
+    private final DataSource dataSource = DataSources.dataSource(CFG.userdataJdbcUrl());
 
     private Connection getConnection() throws SQLException {
         return dataSource.getConnection();
@@ -141,6 +141,18 @@ public class UserRepositoryJdbc implements UserRepository {
                 users.add(user);
             }
             return users;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void delete(@NonNull UserEntity user) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM \"user\" WHERE id = UUID_TO_BIN(?)")) {
+
+            ps.setString(1, user.getId().toString());
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

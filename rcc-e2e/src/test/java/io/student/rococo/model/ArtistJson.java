@@ -16,11 +16,22 @@ public record ArtistJson(
         if (entity == null) {
             return null;
         }
+
+        String photo = null;
+        if (entity.getPhoto() != null) {
+            String raw = new String(entity.getPhoto());
+            if (!raw.startsWith("data:image")) {
+                photo = "data:image/jpeg;base64," + raw;
+            } else {
+                photo = raw;
+            }
+        }
+
         return new ArtistJson(
                 entity.getId(),
                 entity.getName(),
                 entity.getBiography(),
-                entity.getPhoto() != null ? new String(entity.getPhoto()) : null
+                photo
         );
     }
 

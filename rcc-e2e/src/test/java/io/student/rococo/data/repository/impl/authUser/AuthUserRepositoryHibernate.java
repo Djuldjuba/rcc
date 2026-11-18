@@ -19,7 +19,7 @@ public class AuthUserRepositoryHibernate implements AuthUserRepository {
 
     @Override
     public @NonNull AuthUserEntity create(@NonNull AuthUserEntity user) {
-        String jdbcUrl = CFG.rococoAuthUrl();
+        String jdbcUrl = CFG.authJdbcUrl();
 
         AuthUserEntity result = EntityManagers.doInTransaction(jdbcUrl, em -> {
             if (user.getId() == null) {
@@ -49,7 +49,7 @@ public class AuthUserRepositoryHibernate implements AuthUserRepository {
 
     @Override
     public @NonNull Optional<AuthUserEntity> findById(@NonNull UUID id) {
-        String jdbcUrl = CFG.rococoAuthUrl();
+        String jdbcUrl = CFG.authJdbcUrl();
 
         Optional<AuthUserEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 Optional.ofNullable(em.find(AuthUserEntity.class, id))
@@ -60,7 +60,7 @@ public class AuthUserRepositoryHibernate implements AuthUserRepository {
 
     @Override
     public @NonNull List<AuthUserEntity> findAll() {
-        String jdbcUrl = CFG.rococoAuthUrl();
+        String jdbcUrl = CFG.authJdbcUrl();
 
         List<AuthUserEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 em.createQuery(
@@ -74,7 +74,7 @@ public class AuthUserRepositoryHibernate implements AuthUserRepository {
 
     @Override
     public @NonNull Optional<AuthUserEntity> findByUsername(@NonNull String username) {
-        String jdbcUrl = CFG.rococoAuthUrl();
+        String jdbcUrl = CFG.authJdbcUrl();
 
         Optional<AuthUserEntity> result = EntityManagers.doInQuery(jdbcUrl, em -> {
             try {
@@ -92,8 +92,48 @@ public class AuthUserRepositoryHibernate implements AuthUserRepository {
         return result != null ? result : Optional.empty();
     }
 
+    @Override
+    public void delete(@NonNull AuthUserEntity user) {
+        String jdbcUrl = CFG.authJdbcUrl();
+
+        EntityManagers.doInTransaction(jdbcUrl, em -> {
+            if (user.getAuthorities() != null && !user.getAuthorities().isEmpty()) {
+                for (AuthorityEntity authority : user.getAuthorities()) {
+                    if (em.contains(authority)) {
+                        em.remove(authority);
+                    } else {
+                        em.remove(em.merge(authority));
+                    }
+                }
+            }
+
+            if (em.contains(user)) {
+                em.remove(user);
+            } else {
+                em.remove(em.merge(user));
+            }
+            em.flush();
+            return null;
+        });
+    }
+
+    @Override
+    public void deleteAuthority(@NonNull AuthorityEntity authority) {
+        String jdbcUrl = CFG.authJdbcUrl();
+
+        EntityManagers.doInTransaction(jdbcUrl, em -> {
+            if (em.contains(authority)) {
+                em.remove(authority);
+            } else {
+                em.remove(em.merge(authority));
+            }
+            em.flush();
+            return null;
+        });
+    }
+
     public void deleteAll() {
-        String jdbcUrl = CFG.rococoAuthUrl();
+        String jdbcUrl = CFG.authJdbcUrl();
 
         EntityManagers.doInTransaction(jdbcUrl, em -> {
             em.createQuery("DELETE FROM AuthorityEntity").executeUpdate();

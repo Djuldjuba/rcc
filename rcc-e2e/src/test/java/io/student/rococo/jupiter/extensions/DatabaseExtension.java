@@ -7,13 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Logger;
 
 public class DatabaseExtension implements SuiteExtension {
 
-    private static final Logger log = Logger.getLogger(DatabaseExtension.class.getName());
-
-    private static final Map<String, List<EntityManager>> entityManagersByDb = new ConcurrentHashMap<>();
+       private static final Map<String, List<EntityManager>> entityManagersByDb = new ConcurrentHashMap<>();
 
     public static void registerEntityManager(EntityManager em, String jdbcUrl) {
         entityManagersByDb.computeIfAbsent(jdbcUrl, k -> new ArrayList<>()).add(em);
@@ -28,7 +25,6 @@ public class DatabaseExtension implements SuiteExtension {
 
     @Override
     public void afterSuite() {
-        int closedCount = 0;
         for (Map.Entry<String, List<EntityManager>> entry : entityManagersByDb.entrySet()) {
             String dbUrl = entry.getKey();
             List<EntityManager> ems = entry.getValue();
@@ -40,7 +36,6 @@ public class DatabaseExtension implements SuiteExtension {
                             em.getTransaction().rollback();
                         }
                         em.close();
-                        closedCount++;
                     } catch (Exception e) {
                         //nope
                     }

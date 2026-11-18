@@ -1,6 +1,8 @@
 package io.student.rococo.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.student.rococo.data.entity.ArtistEntity;
+import io.student.rococo.data.entity.MuseumEntity;
 import io.student.rococo.data.entity.PaintingEntity;
 import org.jspecify.annotations.Nullable;
 
@@ -15,6 +17,12 @@ public record PaintingJson(
         @JsonProperty("museum") MuseumJson museum
 ) {
     public static @Nullable PaintingJson fromEntity(PaintingEntity entity) {
+        return fromEntity(entity, null, null);
+    }
+
+    public static @Nullable PaintingJson fromEntity(PaintingEntity entity,
+                                                    @Nullable ArtistEntity artist,
+                                                    @Nullable MuseumEntity museum) {
         if (entity == null) {
             return null;
         }
@@ -23,8 +31,8 @@ public record PaintingJson(
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getContent() != null ? new String(entity.getContent()) : null,
-                ArtistJson.fromEntity(entity.getArtist()),
-                MuseumJson.fromEntity(entity.getMuseum())
+                ArtistJson.fromEntity(artist),
+                MuseumJson.fromEntity(museum)
         );
     }
 
@@ -37,10 +45,10 @@ public record PaintingJson(
             entity.setContent(content.getBytes());
         }
         if (artist != null) {
-            entity.setArtist(artist.toEntity());
+            entity.setArtistId(artist.id());
         }
         if (museum != null) {
-            entity.setMuseum(museum.toEntity());
+            entity.setMuseumId(museum.id());
         }
         return entity;
     }

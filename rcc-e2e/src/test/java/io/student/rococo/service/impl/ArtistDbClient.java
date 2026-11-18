@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class ArtistDbClient implements ArtistClient {
 
@@ -87,7 +86,7 @@ public class ArtistDbClient implements ArtistClient {
     public @NonNull List<ArtistJson> findAllArtists() {
         List<ArtistJson> result = artistRepository.findAll().stream()
                 .map(ArtistJson::fromEntity)
-                .collect(Collectors.toList());
+                .toList();
         return result != null ? result : Collections.emptyList();
     }
 

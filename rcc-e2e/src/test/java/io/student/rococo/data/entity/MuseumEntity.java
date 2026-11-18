@@ -1,6 +1,12 @@
 package io.student.rococo.data.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.proxy.HibernateProxy;
@@ -32,9 +38,8 @@ public class MuseumEntity implements Serializable {
   @Column(columnDefinition = "LONGBLOB")
   private byte[] photo;
 
-  @OneToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = "country_id", referencedColumnName = "id")
-  private CountryEntity country;
+  @Column(name = "country_id", nullable = false)
+  private UUID countryId;
 
   @Override
   public final boolean equals(Object o) {

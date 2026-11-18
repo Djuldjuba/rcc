@@ -1,7 +1,5 @@
 package io.student.rococo.data.mapper.extractor;
 
-import io.student.rococo.data.entity.ArtistEntity;
-import io.student.rococo.data.entity.MuseumEntity;
 import io.student.rococo.data.entity.PaintingEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -38,23 +36,12 @@ public class PaintingResultSetExtractor implements ResultSetExtractor<List<Paint
 
                 String artistId = rs.getString("artist_id");
                 if (artistId != null && !rs.wasNull()) {
-                    ArtistEntity artist = new ArtistEntity();
-                    artist.setId(UUID.fromString(artistId));
-                    artist.setName(rs.getString("artist_name"));
-                    artist.setBiography(rs.getString("artist_biography"));
-                    artist.setPhoto(rs.getBytes("artist_photo"));
-                    painting.setArtist(artist);
+                    painting.setArtistId(UUID.fromString(artistId));
                 }
 
                 String museumId = rs.getString("museum_id");
                 if (museumId != null && !rs.wasNull()) {
-                    MuseumEntity museum = new MuseumEntity();
-                    museum.setId(UUID.fromString(museumId));
-                    museum.setTitle(rs.getString("museum_title"));
-                    museum.setDescription(rs.getString("museum_description"));
-                    museum.setCity(rs.getString("museum_city"));
-                    museum.setPhoto(rs.getBytes("museum_photo"));
-                    painting.setMuseum(museum);
+                    painting.setMuseumId(UUID.fromString(museumId));
                 }
 
                 paintingMap.put(paintingId, painting);

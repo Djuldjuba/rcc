@@ -18,7 +18,7 @@ public class CountryRepositoryHibernate implements CountryRepository {
 
     @Override
     public @NonNull Optional<CountryEntity> findById(@NonNull UUID id) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.geoJdbcUrl();
 
         Optional<CountryEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 Optional.ofNullable(em.find(CountryEntity.class, id))
@@ -29,7 +29,7 @@ public class CountryRepositoryHibernate implements CountryRepository {
 
     @Override
     public @NonNull Optional<CountryEntity> findByName(@NonNull String name) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.geoJdbcUrl();
 
         Optional<CountryEntity> result = EntityManagers.doInQuery(jdbcUrl, em -> {
             try {
@@ -49,7 +49,7 @@ public class CountryRepositoryHibernate implements CountryRepository {
 
     @Override
     public @NonNull List<CountryEntity> findAll() {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.geoJdbcUrl();
 
         List<CountryEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 em.createQuery("SELECT c FROM CountryEntity c", CountryEntity.class)

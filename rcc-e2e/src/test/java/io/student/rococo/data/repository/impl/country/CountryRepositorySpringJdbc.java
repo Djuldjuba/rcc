@@ -19,18 +19,18 @@ public class CountryRepositorySpringJdbc implements CountryRepository {
     private final JdbcTemplate jdbcTemplate;
 
     public CountryRepositorySpringJdbc() {
-        this.jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.rococoApiUrl()));
+        this.jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.geoJdbcUrl()));
     }
 
     @Override
     public @NonNull Optional<CountryEntity> findById(@NonNull UUID id) {
         String sql = """
-                 SELECT\s
+                 SELECT
                      BIN_TO_UUID(c.id) as country_id,
                      c.name
                  FROM country c
                  WHERE c.id = UUID_TO_BIN(?)
-                \s""";
+                """;
 
         List<CountryEntity> result = jdbcTemplate.query(sql, CountryListExtractor.instance, id.toString());
         return result != null && !result.isEmpty() ? Optional.of(result.get(0)) : Optional.empty();
@@ -39,12 +39,12 @@ public class CountryRepositorySpringJdbc implements CountryRepository {
     @Override
     public @NonNull Optional<CountryEntity> findByName(@NonNull String name) {
         String sql = """
-                 SELECT\s
+                 SELECT
                      BIN_TO_UUID(c.id) as country_id,
                      c.name
                  FROM country c
                  WHERE c.name = ?
-                \s""";
+                """;
 
         List<CountryEntity> result = jdbcTemplate.query(sql, CountryListExtractor.instance, name);
         return result != null && !result.isEmpty() ? Optional.of(result.get(0)) : Optional.empty();
@@ -53,12 +53,12 @@ public class CountryRepositorySpringJdbc implements CountryRepository {
     @Override
     public @NonNull List<CountryEntity> findAll() {
         String sql = """
-                 SELECT\s
+                 SELECT
                      BIN_TO_UUID(c.id) as country_id,
                      c.name
                  FROM country c
                  ORDER BY c.name
-                \s""";
+                """;
 
         List<CountryEntity> result = jdbcTemplate.query(sql, CountryListExtractor.instance);
         return result != null ? result : Collections.emptyList();

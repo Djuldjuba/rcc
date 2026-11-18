@@ -15,4 +15,5 @@ public @interface Painting {
     String title() default "";
     String description() default "";
     String content() default "";
+    String preset() default "";
 }

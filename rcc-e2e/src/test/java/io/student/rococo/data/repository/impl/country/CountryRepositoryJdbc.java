@@ -7,7 +7,11 @@ import io.student.rococo.data.mapper.tpl.DataSources;
 import org.jspecify.annotations.NonNull;
 
 import javax.sql.DataSource;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +20,7 @@ import java.util.UUID;
 public class CountryRepositoryJdbc implements CountryRepository {
 
     private static final Config CFG = Config.getInstance();
-    private final DataSource dataSource = DataSources.dataSource(CFG.rococoApiUrl());
+    private final DataSource dataSource = DataSources.dataSource(CFG.geoJdbcUrl());
 
     private Connection getConnection() throws SQLException {
         return dataSource.getConnection();

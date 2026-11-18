@@ -1,0 +1,29 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: rcc-geo
+  datasource:
+    url: jdbc:mysql://rcc-mysql:3306/rcc_geo?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: root
+    password: secret
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    schemas: rcc_geo
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: 'http://rcc-auth:9000/oauth2/jwks'
+
+grpc:
+  server:
+    port: 9094
+    security:
+      enabled: false

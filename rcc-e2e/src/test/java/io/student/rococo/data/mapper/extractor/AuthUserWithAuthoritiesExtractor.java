@@ -8,7 +8,11 @@ import io.student.rococo.data.entity.AuthorityEntity;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 public class AuthUserWithAuthoritiesExtractor implements ResultSetExtractor<Optional<AuthUserEntity>> {
 

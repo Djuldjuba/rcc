@@ -14,8 +14,10 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MuseumDbClient implements MuseumClient {
@@ -26,7 +28,7 @@ public class MuseumDbClient implements MuseumClient {
     private final CountryRepository countryRepository = CountryRepository.getInstance();
 
     private final XaTransactionTemplate xaTransactionTemplate = new XaTransactionTemplate(
-            CFG.rococoApiUrl()
+            CFG.museumJdbcUrl()
     );
 
     @Override
@@ -36,7 +38,7 @@ public class MuseumDbClient implements MuseumClient {
             if (museum.title() != null && !museum.title().isEmpty()) {
                 Optional<MuseumEntity> existing = museumRepository.findByTitle(museum.title());
                 if (existing.isPresent()) {
-                    return MuseumJson.fromEntity(existing.get());
+                    return enrich(existing.get());
                 }
             }
 
@@ -52,11 +54,11 @@ public class MuseumDbClient implements MuseumClient {
             if (museum.photo() != null) {
                 museumEntity.setPhoto(museum.photo().getBytes());
             }
-            museumEntity.setCountry(country);
+            museumEntity.setCountryId(country.getId());
 
             MuseumEntity created = museumRepository.create(museumEntity);
 
-            return MuseumJson.fromEntity(created);
+            return MuseumJson.fromEntity(created, country);
         });
 
         if (result == null) {
@@ -77,14 +79,14 @@ public class MuseumDbClient implements MuseumClient {
             existing.setTitle(museum.title());
             existing.setDescription(museum.description());
             existing.setCity(museum.city());
-            existing.setCountry(country);
+            existing.setCountryId(country.getId());
 
             if (museum.photo() != null) {
                 existing.setPhoto(museum.photo().getBytes());
             }
 
             MuseumEntity updated = museumRepository.update(existing);
-            return MuseumJson.fromEntity(updated);
+            return MuseumJson.fromEntity(updated, country);
         });
 
         if (result == null) {
@@ -96,24 +98,32 @@ public class MuseumDbClient implements MuseumClient {
     @Override
     @Step("Найти музей в БД по id")
     public @NonNull Optional<MuseumJson> findMuseumById(@NonNull UUID id) {
-        return museumRepository.findById(id)
-                .map(MuseumJson::fromEntity);
+        return museumRepository.findById(id).map(this::enrich);
     }
 
     @Override
     @Step("Найти музей в БД по названию")
     public @NonNull Optional<MuseumJson> findMuseumByTitle(@NonNull String title) {
-        return museumRepository.findByTitle(title)
-                .map(MuseumJson::fromEntity);
+        return museumRepository.findByTitle(title).map(this::enrich);
     }
 
     @Override
     @Step("Найти все музеи в БД")
     public @NonNull List<MuseumJson> findAllMuseums() {
-        List<MuseumJson> result = museumRepository.findAll().stream()
-                .map(MuseumJson::fromEntity)
+        List<MuseumEntity> museums = museumRepository.findAll();
+        if (museums == null || museums.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<UUID, CountryEntity> countries = countryRepository.findAll().stream()
+                .collect(Collectors.toMap(CountryEntity::getId, Function.identity()));
+
+        return museums.stream()
+                .map(m -> {
+                    CountryEntity country = countries.get(m.getCountryId());
+                    return MuseumJson.fromEntity(m, country);
+                })
                 .collect(Collectors.toList());
-        return result != null ? result : Collections.emptyList();
     }
 
     @Override
@@ -125,6 +135,40 @@ public class MuseumDbClient implements MuseumClient {
         });
     }
 
+    @Step("Удалить музей из БД по ID с проверкой существования")
+    public boolean deleteMuseumById(@NonNull UUID id) {
+        try {
+            Boolean result = xaTransactionTemplate.execute(() -> {
+                Optional<MuseumEntity> existing = museumRepository.findById(id);
+                if (existing.isEmpty()) {
+                    return false;
+                }
+                museumRepository.deleteById(id);
+                return true;
+            });
+            return result != null && result;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete museum by id: " + id, e);
+        }
+    }
+
+    @Step("Удалить музей из БД по названию")
+    public boolean deleteMuseumByTitle(@NonNull String title) {
+        try {
+            Boolean result = xaTransactionTemplate.execute(() -> {
+                Optional<MuseumEntity> existing = museumRepository.findByTitle(title);
+                if (existing.isEmpty()) {
+                    return false;
+                }
+                museumRepository.deleteById(existing.get().getId());
+                return true;
+            });
+            return result != null && result;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete museum by title: " + title, e);
+        }
+    }
+
     @Override
     @Step("Удалить все музеи из БД")
     public void deleteAllMuseums() {
@@ -132,6 +176,13 @@ public class MuseumDbClient implements MuseumClient {
             museumRepository.deleteAll();
             return null;
         });
+    }
+
+    private MuseumJson enrich(MuseumEntity entity) {
+        CountryEntity country = entity.getCountryId() == null
+                ? null
+                : countryRepository.findById(entity.getCountryId()).orElse(null);
+        return MuseumJson.fromEntity(entity, country);
     }
 
     private CountryEntity getCountryEntity(CountryJson countryJson) {
@@ -154,5 +205,20 @@ public class MuseumDbClient implements MuseumClient {
     public Optional<CountryJson> findCountryByName(@NonNull String name) {
         return countryRepository.findByName(name)
                 .map(CountryJson::fromEntity);
+    }
+
+    @Step("Получить все страны из БД")
+    public @NonNull List<CountryJson> getAllCountries() {
+        try {
+            List<CountryEntity> countries = countryRepository.findAll();
+            if (countries == null || countries.isEmpty()) {
+                return Collections.emptyList();
+            }
+            return countries.stream()
+                    .map(CountryJson::fromEntity)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fetch all countries from database", e);
+        }
     }
 }

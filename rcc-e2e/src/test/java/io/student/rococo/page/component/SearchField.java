@@ -8,10 +8,14 @@ import io.student.rococo.page.PaintingPage;
 
 import static com.codeborne.selenide.Selenide.$;
 
-public class SearchField {
+public class SearchField extends BaseComponent<SearchField> {
 
-    private final SelenideElement searchField = $("[type=\"search\"]");
-    private final SelenideElement searchBtn = $("[type=\"search\"] + [type=\"button\"]");
+    public SearchField() {
+        super($("[type=\"search\"]"));
+    }
+
+    private final SelenideElement searchField = self;
+    private final SelenideElement searchBtn = self.parent().$("[type=\"button\"]");
 
     @Step("Выполнить поиск картины по запросу: '{value}'")
     public PaintingPage searchPainting(String value) {

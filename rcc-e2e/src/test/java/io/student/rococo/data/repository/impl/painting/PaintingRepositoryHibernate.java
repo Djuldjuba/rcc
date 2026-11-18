@@ -18,7 +18,7 @@ public class PaintingRepositoryHibernate implements PaintingRepository {
 
     @Override
     public @NonNull PaintingEntity create(@NonNull PaintingEntity painting) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.paintingJdbcUrl();
 
         PaintingEntity result = EntityManagers.doInTransaction(jdbcUrl, em -> {
             if (painting.getId() == null) {
@@ -35,7 +35,7 @@ public class PaintingRepositoryHibernate implements PaintingRepository {
 
     @Override
     public @NonNull PaintingEntity update(@NonNull PaintingEntity painting) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.paintingJdbcUrl();
 
         if (painting.getId() == null) {
             throw new IllegalArgumentException("Cannot update painting without ID");
@@ -51,7 +51,7 @@ public class PaintingRepositoryHibernate implements PaintingRepository {
 
     @Override
     public @NonNull Optional<PaintingEntity> findById(@NonNull UUID id) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.paintingJdbcUrl();
 
         Optional<PaintingEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 Optional.ofNullable(em.find(PaintingEntity.class, id))
@@ -62,15 +62,12 @@ public class PaintingRepositoryHibernate implements PaintingRepository {
 
     @Override
     public @NonNull Optional<PaintingEntity> findByTitle(@NonNull String title) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.paintingJdbcUrl();
 
         Optional<PaintingEntity> result = EntityManagers.doInQuery(jdbcUrl, em -> {
             try {
                 PaintingEntity painting = em.createQuery(
-                                "SELECT DISTINCT p FROM PaintingEntity p " +
-                                        "LEFT JOIN FETCH p.artist " +
-                                        "LEFT JOIN FETCH p.museum " +
-                                        "WHERE p.title = :title",
+                                "SELECT p FROM PaintingEntity p WHERE p.title = :title",
                                 PaintingEntity.class)
                         .setParameter("title", title)
                         .getSingleResult();
@@ -85,14 +82,10 @@ public class PaintingRepositoryHibernate implements PaintingRepository {
 
     @Override
     public @NonNull List<PaintingEntity> findAll() {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.paintingJdbcUrl();
 
         List<PaintingEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
-                em.createQuery(
-                                "SELECT DISTINCT p FROM PaintingEntity p " +
-                                        "LEFT JOIN FETCH p.artist " +
-                                        "LEFT JOIN FETCH p.museum",
-                                PaintingEntity.class)
+                em.createQuery("SELECT p FROM PaintingEntity p", PaintingEntity.class)
                         .getResultList()
         );
 
@@ -101,14 +94,11 @@ public class PaintingRepositoryHibernate implements PaintingRepository {
 
     @Override
     public @NonNull List<PaintingEntity> findAllByArtistId(@NonNull UUID artistId) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.paintingJdbcUrl();
 
         List<PaintingEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 em.createQuery(
-                                "SELECT DISTINCT p FROM PaintingEntity p " +
-                                        "LEFT JOIN FETCH p.artist " +
-                                        "LEFT JOIN FETCH p.museum " +
-                                        "WHERE p.artist.id = :artistId",
+                                "SELECT p FROM PaintingEntity p WHERE p.artistId = :artistId",
                                 PaintingEntity.class)
                         .setParameter("artistId", artistId)
                         .getResultList()
@@ -119,14 +109,11 @@ public class PaintingRepositoryHibernate implements PaintingRepository {
 
     @Override
     public @NonNull List<PaintingEntity> findAllByMuseumId(@NonNull UUID museumId) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.paintingJdbcUrl();
 
         List<PaintingEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 em.createQuery(
-                                "SELECT DISTINCT p FROM PaintingEntity p " +
-                                        "LEFT JOIN FETCH p.artist " +
-                                        "LEFT JOIN FETCH p.museum " +
-                                        "WHERE p.museum.id = :museumId",
+                                "SELECT p FROM PaintingEntity p WHERE p.museumId = :museumId",
                                 PaintingEntity.class)
                         .setParameter("museumId", museumId)
                         .getResultList()
@@ -137,7 +124,7 @@ public class PaintingRepositoryHibernate implements PaintingRepository {
 
     @Override
     public void deleteById(@NonNull UUID id) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.paintingJdbcUrl();
 
         EntityManagers.doInTransaction(jdbcUrl, em -> {
             PaintingEntity painting = em.find(PaintingEntity.class, id);
@@ -150,7 +137,7 @@ public class PaintingRepositoryHibernate implements PaintingRepository {
 
     @Override
     public void deleteAll() {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.paintingJdbcUrl();
 
         EntityManagers.doInTransaction(jdbcUrl, em -> {
             em.createQuery("DELETE FROM PaintingEntity").executeUpdate();

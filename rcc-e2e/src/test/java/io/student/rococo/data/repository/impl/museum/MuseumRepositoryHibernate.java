@@ -18,7 +18,7 @@ public class MuseumRepositoryHibernate implements MuseumRepository {
 
     @Override
     public @NonNull MuseumEntity create(@NonNull MuseumEntity museum) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.museumJdbcUrl();
 
         MuseumEntity result = EntityManagers.doInTransaction(jdbcUrl, em -> {
             if (museum.getId() == null) {
@@ -35,7 +35,7 @@ public class MuseumRepositoryHibernate implements MuseumRepository {
 
     @Override
     public @NonNull MuseumEntity update(@NonNull MuseumEntity museum) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.museumJdbcUrl();
 
         if (museum.getId() == null) {
             throw new IllegalArgumentException("Cannot update museum without ID");
@@ -51,7 +51,7 @@ public class MuseumRepositoryHibernate implements MuseumRepository {
 
     @Override
     public @NonNull Optional<MuseumEntity> findById(@NonNull UUID id) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.museumJdbcUrl();
 
         Optional<MuseumEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 Optional.ofNullable(em.find(MuseumEntity.class, id))
@@ -62,12 +62,12 @@ public class MuseumRepositoryHibernate implements MuseumRepository {
 
     @Override
     public @NonNull Optional<MuseumEntity> findByTitle(@NonNull String title) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.museumJdbcUrl();
 
         Optional<MuseumEntity> result = EntityManagers.doInQuery(jdbcUrl, em -> {
             try {
                 MuseumEntity museum = em.createQuery(
-                                "SELECT DISTINCT m FROM MuseumEntity m LEFT JOIN FETCH m.country WHERE m.title = :title",
+                                "SELECT m FROM MuseumEntity m WHERE m.title = :title",
                                 MuseumEntity.class)
                         .setParameter("title", title)
                         .getSingleResult();
@@ -82,10 +82,10 @@ public class MuseumRepositoryHibernate implements MuseumRepository {
 
     @Override
     public @NonNull List<MuseumEntity> findAll() {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.museumJdbcUrl();
 
         List<MuseumEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
-                em.createQuery("SELECT DISTINCT m FROM MuseumEntity m LEFT JOIN FETCH m.country", MuseumEntity.class)
+                em.createQuery("SELECT m FROM MuseumEntity m", MuseumEntity.class)
                         .getResultList()
         );
 
@@ -94,7 +94,7 @@ public class MuseumRepositoryHibernate implements MuseumRepository {
 
     @Override
     public void deleteById(@NonNull UUID id) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.museumJdbcUrl();
 
         EntityManagers.doInTransaction(jdbcUrl, em -> {
             MuseumEntity museum = em.find(MuseumEntity.class, id);
@@ -107,7 +107,7 @@ public class MuseumRepositoryHibernate implements MuseumRepository {
 
     @Override
     public void deleteAll() {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.museumJdbcUrl();
 
         EntityManagers.doInTransaction(jdbcUrl, em -> {
             em.createQuery("DELETE FROM MuseumEntity").executeUpdate();

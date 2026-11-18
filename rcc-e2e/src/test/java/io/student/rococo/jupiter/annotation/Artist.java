@@ -15,4 +15,5 @@ public @interface Artist {
     String name() default "";
     String biography() default "";
     String photo() default "";
+    String preset() default "";
 }

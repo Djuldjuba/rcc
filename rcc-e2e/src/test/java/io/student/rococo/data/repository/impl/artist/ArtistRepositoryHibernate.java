@@ -18,7 +18,7 @@ public class ArtistRepositoryHibernate implements ArtistRepository {
 
     @Override
     public @NonNull ArtistEntity create(@NonNull ArtistEntity artist) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.artistJdbcUrl();
 
         ArtistEntity result = EntityManagers.doInTransaction(jdbcUrl, em -> {
             if (artist.getId() == null) {
@@ -35,7 +35,7 @@ public class ArtistRepositoryHibernate implements ArtistRepository {
 
     @Override
     public @NonNull ArtistEntity update(@NonNull ArtistEntity artist) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.artistJdbcUrl();
 
         if (artist.getId() == null) {
             throw new IllegalArgumentException("Cannot update artist without ID");
@@ -56,7 +56,7 @@ public class ArtistRepositoryHibernate implements ArtistRepository {
 
     @Override
     public @NonNull Optional<ArtistEntity> findById(@NonNull UUID id) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.artistJdbcUrl();
 
         Optional<ArtistEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 Optional.ofNullable(em.find(ArtistEntity.class, id))
@@ -67,7 +67,7 @@ public class ArtistRepositoryHibernate implements ArtistRepository {
 
     @Override
     public @NonNull Optional<ArtistEntity> findByName(@NonNull String name) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.artistJdbcUrl();
 
         Optional<ArtistEntity> result = EntityManagers.doInQuery(jdbcUrl, em -> {
             try {
@@ -87,7 +87,7 @@ public class ArtistRepositoryHibernate implements ArtistRepository {
 
     @Override
     public @NonNull List<ArtistEntity> findAll() {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.artistJdbcUrl();
 
         List<ArtistEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 em.createQuery("SELECT a FROM ArtistEntity a ORDER BY a.name", ArtistEntity.class)
@@ -99,7 +99,7 @@ public class ArtistRepositoryHibernate implements ArtistRepository {
 
     @Override
     public void deleteById(@NonNull UUID id) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.artistJdbcUrl();
 
         EntityManagers.doInTransaction(jdbcUrl, em -> {
             ArtistEntity artist = em.find(ArtistEntity.class, id);
@@ -112,7 +112,7 @@ public class ArtistRepositoryHibernate implements ArtistRepository {
 
     @Override
     public void deleteAll() {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.artistJdbcUrl();
 
         EntityManagers.doInTransaction(jdbcUrl, em -> {
             em.createQuery("DELETE FROM ArtistEntity").executeUpdate();

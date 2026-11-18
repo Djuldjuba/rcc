@@ -5,7 +5,6 @@ import io.student.rococo.data.repository.impl.painting.PaintingRepositoryHiberna
 import io.student.rococo.data.repository.impl.painting.PaintingRepositoryJdbc;
 import io.student.rococo.data.repository.impl.painting.PaintingRepositorySpringJdbc;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;

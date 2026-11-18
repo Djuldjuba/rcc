@@ -1,11 +1,11 @@
 package io.student.rococo.data.repository;
 
 import io.student.rococo.data.entity.AuthUserEntity;
+import io.student.rococo.data.entity.AuthorityEntity;
 import io.student.rococo.data.repository.impl.authUser.AuthUserRepositoryHibernate;
 import io.student.rococo.data.repository.impl.authUser.AuthUserRepositoryJdbc;
 import io.student.rococo.data.repository.impl.authUser.AuthUserRepositorySpringJdbc;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,4 +28,8 @@ public interface AuthUserRepository {
     @NonNull List<AuthUserEntity> findAll();
 
     @NonNull Optional<AuthUserEntity> findByUsername(@NonNull String username);
+
+    void delete(@NonNull AuthUserEntity user);
+
+    void deleteAuthority(@NonNull AuthorityEntity authority);
 }

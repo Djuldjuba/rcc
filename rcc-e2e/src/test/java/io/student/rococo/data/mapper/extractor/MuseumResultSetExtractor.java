@@ -2,7 +2,6 @@ package io.student.rococo.data.mapper.extractor;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import io.student.rococo.data.entity.CountryEntity;
 import io.student.rococo.data.entity.MuseumEntity;
 
 import java.sql.ResultSet;
@@ -38,10 +37,7 @@ public class MuseumResultSetExtractor implements ResultSetExtractor<List<MuseumE
 
                 String countryId = rs.getString("country_id");
                 if (countryId != null && !rs.wasNull()) {
-                    CountryEntity country = new CountryEntity();
-                    country.setId(UUID.fromString(countryId));
-                    country.setName(rs.getString("country_name"));
-                    museum.setCountry(country);
+                    museum.setCountryId(UUID.fromString(countryId));
                 }
 
                 museumMap.put(museumId, museum);

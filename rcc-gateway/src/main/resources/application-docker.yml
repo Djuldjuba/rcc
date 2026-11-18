@@ -1,0 +1,35 @@
+server:
+  port: 8085
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: 'http://rcc-auth:9000/oauth2/jwks'
+
+grpc:
+  client:
+    artist-service:
+      address: 'static://rcc-artist:9090'
+      negotiation-type: plaintext
+      max-inbound-message-size: 20971520
+    museum-service:
+      address: 'static://rcc-museum:9093'
+      negotiation-type: plaintext
+      max-inbound-message-size: 20971520
+    painting-service:
+      address: 'static://rcc-painting:9091'
+      negotiation-type: plaintext
+      max-inbound-message-size: 20971520
+    geo-service:
+      address: 'static://rcc-geo:9094'
+      negotiation-type: plaintext
+    userdata-service:
+      address: 'static://rcc-userdata:9095'
+      negotiation-type: plaintext
+
+rococo-front:
+  base-uri: 'http://rcc-client'
+rococo-gateway:
+  base-uri: 'http://rcc-gateway:8085'

@@ -75,7 +75,7 @@ public class AuthUserRepositorySpringJdbc implements AuthUserRepository {
     @Override
     public @NonNull Optional<AuthUserEntity> findById(@NonNull UUID id) {
         String sql = """
-                 SELECT\s
+                 SELECT 
                      BIN_TO_UUID(u.id) as user_id,
                      u.username,
                      u.password,
@@ -88,7 +88,7 @@ public class AuthUserRepositorySpringJdbc implements AuthUserRepository {
                  FROM "user" u
                  LEFT JOIN authority a ON u.id = a.user_id
                  WHERE u.id = UUID_TO_BIN(?)
-                \s""";
+                """;
 
         return Objects.requireNonNullElseGet(
                 jdbcTemplate.query(sql, AuthUserWithAuthoritiesExtractor.instance, id.toString()),
@@ -99,7 +99,7 @@ public class AuthUserRepositorySpringJdbc implements AuthUserRepository {
     @Override
     public @NonNull List<AuthUserEntity> findAll() {
         String sql = """
-                 SELECT\s
+                 SELECT 
                      BIN_TO_UUID(u.id) as user_id,
                      u.username,
                      u.password,
@@ -112,7 +112,7 @@ public class AuthUserRepositorySpringJdbc implements AuthUserRepository {
                  FROM "user" u
                  LEFT JOIN authority a ON u.id = a.user_id
                  ORDER BY u.username
-                \s""";
+                """;
 
         List<AuthUserEntity> result = jdbcTemplate.query(sql, rs -> {
             java.util.Map<UUID, AuthUserEntity> userMap = new java.util.LinkedHashMap<>();
@@ -150,7 +150,7 @@ public class AuthUserRepositorySpringJdbc implements AuthUserRepository {
     @Override
     public @NonNull Optional<AuthUserEntity> findByUsername(@NonNull String username) {
         String sql = """
-                 SELECT\s
+                 SELECT 
                      BIN_TO_UUID(u.id) as user_id,
                      u.username,
                      u.password,
@@ -163,11 +163,26 @@ public class AuthUserRepositorySpringJdbc implements AuthUserRepository {
                  FROM "user" u
                  LEFT JOIN authority a ON u.id = a.user_id
                  WHERE u.username = ?
-                \s""";
+                """;
 
         return Objects.requireNonNullElseGet(
                 jdbcTemplate.query(sql, AuthUserWithAuthoritiesExtractor.instance, username),
                 Optional::empty
         );
+    }
+
+    @Override
+    public void delete(@NonNull AuthUserEntity user) {
+        jdbcTemplate.update("DELETE FROM authority WHERE user_id = UUID_TO_BIN(?)",
+                user.getId().toString());
+
+        jdbcTemplate.update("DELETE FROM \"user\" WHERE id = UUID_TO_BIN(?)",
+                user.getId().toString());
+    }
+
+    @Override
+    public void deleteAuthority(@NonNull AuthorityEntity authority) {
+        jdbcTemplate.update("DELETE FROM authority WHERE id = UUID_TO_BIN(?)",
+                authority.getId().toString());
     }
 }

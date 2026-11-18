@@ -9,13 +9,13 @@ import io.student.rococo.data.entity.UserEntity;
 import io.student.rococo.model.UserJson;
 import io.student.rococo.data.repository.AuthUserRepository;
 import io.student.rococo.data.repository.UserRepository;
-import io.student.rococo.data.mapper.tpl.XaTransactionTemplate;
 import io.student.rococo.service.UsersClient;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 public class UsersDbClient implements UsersClient {
@@ -26,11 +26,6 @@ public class UsersDbClient implements UsersClient {
     private final AuthUserRepository authUserRepository = AuthUserRepository.getInstance();
     private final UserRepository userRepository = UserRepository.getInstance();
 
-    private final XaTransactionTemplate xaTransactionTemplate = new XaTransactionTemplate(
-            CFG.rococoAuthUrl(),
-            CFG.rococoApiUrl()
-    );
-
     @Override
     @Step("Создать пользователя с username '{username}'")
     public @NonNull UserJson createUser(@NonNull String username, @NonNull String password) {
@@ -39,23 +34,38 @@ public class UsersDbClient implements UsersClient {
 
     @Step("Создать пользователя с username '{username}'")
     public @NonNull UserJson createUser(@NonNull String username, @NonNull String password, boolean enabled) {
-        UserJson result = xaTransactionTemplate.execute(() -> {
-            UUID userId = UUID.randomUUID();
-            String encodedPassword = passwordEncoder.encode(password);
+        UUID userId = UUID.randomUUID();
+        String encodedPassword = passwordEncoder.encode(password);
 
-            AuthUserEntity authUser = createAuthUserEntity(userId, username, encodedPassword, enabled);
-            authUserRepository.create(authUser);
+        AuthUserEntity authUser = createAuthUserEntity(userId, username, encodedPassword, enabled);
+        authUserRepository.create(authUser);
 
-            UserEntity apiUser = createApiUserEntity(userId, username);
-            userRepository.create(apiUser);
+        UserEntity apiUser = createApiUserEntity(userId, username);
+        userRepository.create(apiUser);
 
-            return new UserJson(userId, username, null, null, null);
-        });
+        return new UserJson(userId, username, null, null, null);
+    }
 
-        if (result == null) {
-            throw new IllegalStateException("Failed to create user");
+    public Optional<UserJson> findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .map(UserJson::fromEntity);
+    }
+
+    @Step("Удалить пользователя с username '{username}'")
+    public void deleteUserByUsername(@NonNull String username) {
+        // Удаляем из Auth базы
+        Optional<AuthUserEntity> authUser = authUserRepository.findByUsername(username);
+        if (authUser.isPresent()) {
+            AuthUserEntity user = authUser.get();
+            if (user.getAuthorities() != null) {
+                user.getAuthorities().forEach(authUserRepository::deleteAuthority);
+            }
+            authUserRepository.delete(user);
         }
-        return result;
+
+        // Удаляем из API базы
+        Optional<UserEntity> apiUser = userRepository.findByUsername(username);
+        apiUser.ifPresent(userRepository::delete);
     }
 
     private AuthUserEntity createAuthUserEntity(UUID userId, String username, String encodedPassword, boolean enabled) {

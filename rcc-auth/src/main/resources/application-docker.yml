@@ -1,0 +1,42 @@
+server:
+  port: 9000
+
+spring:
+  datasource:
+    url: jdbc:mysql://rcc-mysql:3306/rococo-auth?serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
+    password: secret
+  flyway:
+    schemas: rococo-auth
+  kafka:
+    bootstrap-servers: 'rcc-kafka:9092'
+  security:
+    oauth2:
+      authorizationserver:
+        client:
+          oidc-client:
+            registration:
+              client-id: "client"
+              client-authentication-methods:
+                - "none"
+              authorization-grant-types:
+                - "authorization_code"
+              redirect-uris:
+                - "http://rcc-client/authorized"
+                - "http://localhost:3000/authorized"   # оставляем для локального запуска
+              post-logout-redirect-uris:
+                - "http://rcc-client/logout"
+                - "http://localhost:3000/logout"
+              scopes:
+                - "openid"
+                - "profile"
+            require-authorization-consent: true
+            require-proof-key: true
+            token-settings:
+              access-token-time-to-live: 1800
+              authorization-code-time-to-live: 1800
+
+rococo-front:
+  base-uri: 'http://rcc-client'
+rococo-auth:
+  base-uri: 'http://rcc-auth:9000'

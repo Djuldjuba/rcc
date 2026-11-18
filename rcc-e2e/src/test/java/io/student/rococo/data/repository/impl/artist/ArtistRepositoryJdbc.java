@@ -16,7 +16,7 @@ import java.util.UUID;
 public class ArtistRepositoryJdbc implements ArtistRepository {
 
     private static final Config CFG = Config.getInstance();
-    private final DataSource dataSource = DataSources.dataSource(CFG.rococoApiUrl());
+    private final DataSource dataSource = DataSources.dataSource(CFG.artistJdbcUrl());
 
     private Connection getConnection() throws SQLException {
         return dataSource.getConnection();

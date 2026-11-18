@@ -5,7 +5,6 @@ import io.student.rococo.data.repository.impl.user.UserRepositoryHibernate;
 import io.student.rococo.data.repository.impl.user.UserRepositoryJdbc;
 import io.student.rococo.data.repository.impl.user.UserRepositorySpringJdbc;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,4 +29,6 @@ public interface UserRepository {
     @NonNull Optional<UserEntity> findByUsername(@NonNull String username);
 
     @NonNull List<UserEntity> findAll();
+
+    void delete(UserEntity user);
 }

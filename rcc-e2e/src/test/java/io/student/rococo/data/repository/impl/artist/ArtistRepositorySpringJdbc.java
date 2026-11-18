@@ -19,7 +19,7 @@ public class ArtistRepositorySpringJdbc implements ArtistRepository {
     private final JdbcTemplate jdbcTemplate;
 
     public ArtistRepositorySpringJdbc() {
-        this.jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.rococoApiUrl()));
+        this.jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.artistJdbcUrl()));
     }
 
     @Override
@@ -59,14 +59,14 @@ public class ArtistRepositorySpringJdbc implements ArtistRepository {
     @Override
     public @NonNull Optional<ArtistEntity> findById(@NonNull UUID id) {
         String sql = """
-                 SELECT\s
+                 SELECT
                      BIN_TO_UUID(id) as artist_id,
                      name,
                      biography,
                      photo
                  FROM artist
                  WHERE id = UUID_TO_BIN(?)
-                \s""";
+                """;
 
         List<ArtistEntity> result = jdbcTemplate.query(sql, ArtistResultSetExtractor.instance, id.toString());
         return result != null && !result.isEmpty() ? Optional.of(result.get(0)) : Optional.empty();
@@ -75,14 +75,14 @@ public class ArtistRepositorySpringJdbc implements ArtistRepository {
     @Override
     public @NonNull Optional<ArtistEntity> findByName(@NonNull String name) {
         String sql = """
-                 SELECT\s
+                 SELECT
                      BIN_TO_UUID(id) as artist_id,
                      name,
                      biography,
                      photo
                  FROM artist
                  WHERE name = ?
-                \s""";
+                """;
 
         List<ArtistEntity> result = jdbcTemplate.query(sql, ArtistResultSetExtractor.instance, name);
         return result != null && !result.isEmpty() ? Optional.of(result.get(0)) : Optional.empty();
@@ -91,14 +91,14 @@ public class ArtistRepositorySpringJdbc implements ArtistRepository {
     @Override
     public @NonNull List<ArtistEntity> findAll() {
         String sql = """
-                 SELECT\s
+                 SELECT
                      BIN_TO_UUID(id) as artist_id,
                      name,
                      biography,
                      photo
                  FROM artist
                  ORDER BY name
-                \s""";
+                """;
 
         List<ArtistEntity> result = jdbcTemplate.query(sql, ArtistResultSetExtractor.instance);
         return result != null ? result : Collections.emptyList();

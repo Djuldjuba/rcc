@@ -73,7 +73,7 @@ public class AuthUserRepositoryJdbc implements AuthUserRepository {
     @Override
     public @NonNull Optional<AuthUserEntity> findById(@NonNull UUID id) {
         String sql = """
-                 SELECT\s
+                 SELECT 
                      BIN_TO_UUID(u.id) as user_id,
                      u.username,
                      u.password,
@@ -86,7 +86,7 @@ public class AuthUserRepositoryJdbc implements AuthUserRepository {
                  FROM "user" u
                  LEFT JOIN authority a ON u.id = a.user_id
                  WHERE u.id = UUID_TO_BIN(?)
-                \s""";
+                """;
 
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -130,7 +130,7 @@ public class AuthUserRepositoryJdbc implements AuthUserRepository {
     @Override
     public @NonNull List<AuthUserEntity> findAll() {
         String sql = """
-                 SELECT\s
+                 SELECT 
                      BIN_TO_UUID(u.id) as user_id,
                      u.username,
                      u.password,
@@ -143,7 +143,7 @@ public class AuthUserRepositoryJdbc implements AuthUserRepository {
                  FROM "user" u
                  LEFT JOIN authority a ON u.id = a.user_id
                  ORDER BY u.username
-                \s""";
+                """;
 
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -187,7 +187,7 @@ public class AuthUserRepositoryJdbc implements AuthUserRepository {
     @Override
     public @NonNull Optional<AuthUserEntity> findByUsername(@NonNull String username) {
         String sql = """
-                 SELECT\s
+                 SELECT 
                      BIN_TO_UUID(u.id) as user_id,
                      u.username,
                      u.password,
@@ -200,7 +200,7 @@ public class AuthUserRepositoryJdbc implements AuthUserRepository {
                  FROM "user" u
                  LEFT JOIN authority a ON u.id = a.user_id
                  WHERE u.username = ?
-                \s""";
+                """;
 
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -236,6 +236,34 @@ public class AuthUserRepositoryJdbc implements AuthUserRepository {
 
                 return Optional.ofNullable(user);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void delete(@NonNull AuthUserEntity user) {
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM authority WHERE user_id = UUID_TO_BIN(?)")) {
+                ps.setString(1, user.getId().toString());
+                ps.executeUpdate();
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM \"user\" WHERE id = UUID_TO_BIN(?)")) {
+                ps.setString(1, user.getId().toString());
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void deleteAuthority(@NonNull AuthorityEntity authority) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement("DELETE FROM authority WHERE id = UUID_TO_BIN(?)")) {
+            ps.setString(1, authority.getId().toString());
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

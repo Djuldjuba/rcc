@@ -11,7 +11,6 @@ import io.student.rococo.data.mapper.tpl.DataSources;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,7 +21,7 @@ public class UserRepositorySpringJdbc implements UserRepository {
     private final JdbcTemplate jdbcTemplate;
 
     public UserRepositorySpringJdbc() {
-        this.jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.rococoApiUrl()));
+        this.jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.userdataJdbcUrl()));
     }
 
     @Override
@@ -128,5 +127,10 @@ public class UserRepositorySpringJdbc implements UserRepository {
             user.setAvatar(rs.getBytes("avatar"));
             return user;
         });
+    }
+
+    @Override
+    public void delete(@NonNull UserEntity user) {
+        jdbcTemplate.update("DELETE FROM \"user\" WHERE id = UUID_TO_BIN(?)", user.getId().toString());
     }
 }

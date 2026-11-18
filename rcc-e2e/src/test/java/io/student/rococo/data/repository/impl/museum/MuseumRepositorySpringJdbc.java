@@ -19,13 +19,13 @@ public class MuseumRepositorySpringJdbc implements MuseumRepository {
     private final JdbcTemplate jdbcTemplate;
 
     public MuseumRepositorySpringJdbc() {
-        this.jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.rococoApiUrl()));
+        this.jdbcTemplate = new JdbcTemplate(DataSources.dataSource(CFG.museumJdbcUrl()));
     }
 
     @Override
     public @NonNull MuseumEntity create(@NonNull MuseumEntity museum) {
         UUID id = museum.getId() != null ? museum.getId() : UUID.randomUUID();
-        UUID countryId = museum.getCountry() != null ? museum.getCountry().getId() : null;
+        UUID countryId = museum.getCountryId();
 
         jdbcTemplate.update(
                 "INSERT INTO museum (id, title, description, city, photo, country_id) " +
@@ -48,7 +48,7 @@ public class MuseumRepositorySpringJdbc implements MuseumRepository {
             throw new IllegalArgumentException("Cannot update museum without ID");
         }
 
-        UUID countryId = museum.getCountry() != null ? museum.getCountry().getId() : null;
+        UUID countryId = museum.getCountryId();
 
         jdbcTemplate.update(
                 "UPDATE museum SET title = ?, description = ?, city = ?, photo = ?, country_id = UUID_TO_BIN(?) " +
@@ -66,18 +66,16 @@ public class MuseumRepositorySpringJdbc implements MuseumRepository {
     @Override
     public @NonNull Optional<MuseumEntity> findById(@NonNull UUID id) {
         String sql = """
-                 SELECT\s
+                 SELECT
                      BIN_TO_UUID(m.id) as museum_id,
                      m.title,
                      m.description,
                      m.city,
                      m.photo,
-                     BIN_TO_UUID(m.country_id) as country_id,
-                     c.name as country_name
+                     BIN_TO_UUID(m.country_id) as country_id
                  FROM museum m
-                 LEFT JOIN country c ON m.country_id = c.id
                  WHERE m.id = UUID_TO_BIN(?)
-                \s""";
+                """;
 
         List<MuseumEntity> result = jdbcTemplate.query(sql, MuseumResultSetExtractor.instance, id.toString());
         return result != null && !result.isEmpty() ? Optional.of(result.get(0)) : Optional.empty();
@@ -86,18 +84,16 @@ public class MuseumRepositorySpringJdbc implements MuseumRepository {
     @Override
     public @NonNull Optional<MuseumEntity> findByTitle(@NonNull String title) {
         String sql = """
-                 SELECT\s
+                 SELECT
                    BIN_TO_UUID(m.id) as museum_id,
                    m.title,
                    m.description,
                    m.city,
                    m.photo,
-                   BIN_TO_UUID(m.country_id) as country_id,
-                   c.name as country_name
+                   BIN_TO_UUID(m.country_id) as country_id
                  FROM museum m
-                 LEFT JOIN country c ON m.country_id = c.id
                  WHERE m.title = ?
-                \s""";
+                """;
 
         List<MuseumEntity> result = jdbcTemplate.query(sql, MuseumResultSetExtractor.instance, title);
         return result != null && !result.isEmpty() ? Optional.of(result.get(0)) : Optional.empty();
@@ -106,17 +102,15 @@ public class MuseumRepositorySpringJdbc implements MuseumRepository {
     @Override
     public @NonNull List<MuseumEntity> findAll() {
         String sql = """
-                 SELECT\s
+                 SELECT
                    BIN_TO_UUID(m.id) as museum_id,
                    m.title,
                    m.description,
                    m.city,
                    m.photo,
-                   BIN_TO_UUID(m.country_id) as country_id,
-                   c.name as country_name
+                   BIN_TO_UUID(m.country_id) as country_id
                  FROM museum m
-                 LEFT JOIN country c ON m.country_id = c.id
-                \s""";
+                """;
 
         List<MuseumEntity> result = jdbcTemplate.query(sql, MuseumResultSetExtractor.instance);
         return result != null ? result : Collections.emptyList();

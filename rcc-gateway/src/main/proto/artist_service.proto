@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package io.student.rcc.artist;
+
+option java_multiple_files = true;
+option java_package = "io.student.rcc.artist.grpc";
+option java_outer_classname = "ArtistProto";
+
+service ArtistService {
+  rpc GetArtist(GetArtistRequest) returns (ArtistResponseProto);
+  rpc GetAllArtists(EmptyRequest) returns (ArtistListResponseProto);
+  rpc AddArtist(CreateArtistRequestProto) returns (ArtistResponseProto);
+  rpc UpdateArtist(UpdateArtistRequestProto) returns (ArtistResponseProto);
+  rpc DeleteArtist(DeleteArtistRequest) returns (EmptyResponse);
+  rpc SearchArtists(SearchRequest) returns (ArtistListResponseProto);
+}
+
+message EmptyRequest {}
+message EmptyResponse {}
+
+message GetArtistRequest {
+  string id = 1;
+}
+
+message DeleteArtistRequest {
+  string id = 1;
+}
+
+message CreateArtistRequestProto {
+  string name = 1;
+  string biography = 2;
+  string photo = 3;
+}
+
+message UpdateArtistRequestProto {
+  string id = 1;
+  optional string name = 2;
+  optional string biography = 3;
+  optional string photo = 4;
+}
+
+message SearchRequest {
+  string name = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message ArtistResponseProto {
+  string id = 1;
+  string name = 2;
+  string biography = 3;
+  string photo = 4;
+}
+
+message ArtistListResponseProto {
+  repeated ArtistResponseProto artists = 1;
+  int32 totalPages = 2;
+  int64 totalElements = 3;
+}

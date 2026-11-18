@@ -1,6 +1,7 @@
 package io.student.rococo.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.student.rococo.data.entity.CountryEntity;
 import io.student.rococo.data.entity.MuseumEntity;
 import org.jspecify.annotations.Nullable;
 
@@ -15,6 +16,10 @@ public record MuseumJson(
         @JsonProperty("country") CountryJson country
 ) {
     public static @Nullable MuseumJson fromEntity(MuseumEntity entity) {
+        return fromEntity(entity, null);
+    }
+
+    public static @Nullable MuseumJson fromEntity(MuseumEntity entity, @Nullable CountryEntity country) {
         if (entity == null) {
             return null;
         }
@@ -24,7 +29,7 @@ public record MuseumJson(
                 entity.getDescription(),
                 entity.getCity(),
                 entity.getPhoto() != null ? new String(entity.getPhoto()) : null,
-                CountryJson.fromEntity(entity.getCountry())
+                CountryJson.fromEntity(country)
         );
     }
 
@@ -38,7 +43,7 @@ public record MuseumJson(
             entity.setPhoto(photo.getBytes());
         }
         if (country != null) {
-            entity.setCountry(country.toEntity());
+            entity.setCountryId(country.id());
         }
         return entity;
     }

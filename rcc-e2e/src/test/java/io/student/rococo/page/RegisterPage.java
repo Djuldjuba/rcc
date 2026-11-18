@@ -4,19 +4,18 @@ import com.codeborne.selenide.SelenideElement;
 import io.qameta.allure.Step;
 
 import static com.codeborne.selenide.Condition.text;
-import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 
 public class RegisterPage {
 
-    private final SelenideElement usernameInput = $("#username");
-    private final SelenideElement passwordInput = $("#password");
-    private final SelenideElement submitPasswordBtn = $("#passwordSubmit");
+    private final SelenideElement usernameInput = $(".form #username");
+    private final SelenideElement passwordInput = $(".form #password");
+    private final SelenideElement submitPasswordBtn = $(".form #passwordSubmit");
     private final SelenideElement registerBtn = $(".form__submit");
     private final SelenideElement usernameErrorText = $(".form__error.error__username");
     private final SelenideElement passwordErrorText = $(".form__error.error__password");
     private final SelenideElement welcomeTitle = $("p.form__subheader");
-
+    private final SelenideElement loginBtn = $("a.form__link");
 
     @Step("Ввести имя пользователя: '{username}'")
     public RegisterPage setUsername(String username) {
@@ -42,23 +41,22 @@ public class RegisterPage {
         return this;
     }
 
-    @Step("Выполнить успешную регистрацию")
-    public MainPage successRegistrationUser(String username, String password) {
-        setUsername(username);
-        setPassword(password);
-        setConfirmPassword(password);
+    @Step("Проверить отображение надписи Добро пожаловать в Rococo")
+    public RegisterPage checkWelcomeTitle() {
+        welcomeTitle.shouldHave(text("Добро пожаловать в Rococo"));
+        return this;
+    }
+
+    @Step("Нажать на кнопку Зарегистрироваться")
+    public MainPage clickRegisterBtn() {
         registerBtn.click();
-        welcomeTitle.shouldBe(visible);
         return new MainPage();
     }
 
-    @Step("Выполнить неуспешную регистрацию")
-    public RegisterPage unsuccessRegistrationUser(String username, String password) {
-        setUsername(username);
-        setPassword(password);
-        setConfirmPassword(password);
-        clickRegisterUser();
-        return this;
+    @Step("Нажать на кнопку Войти")
+    public MainPage clickLoginBtn() {
+        loginBtn.click();
+        return new MainPage();
     }
 
     @Step("Проверить ошибку контроля под полем 'Имя пользователя'")

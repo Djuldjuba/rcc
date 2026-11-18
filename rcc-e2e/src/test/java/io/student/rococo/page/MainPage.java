@@ -2,20 +2,29 @@ package io.student.rococo.page;
 
 import com.codeborne.selenide.SelenideElement;
 import io.qameta.allure.Step;
+import io.student.rococo.jupiter.extensions.ScreenShotTestExtension;
+import io.student.rococo.utils.ScreenDiffResult;
+
+import javax.annotation.Nonnull;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.Objects;
 
 import static com.codeborne.selenide.Condition.text;
-import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class MainPage extends BasePage {
+public class MainPage extends BasePage<MainPage> {
 
     private final SelenideElement mainTitle = $("#page h1");
     private final SelenideElement paintings = $("#page-content [href='/painting']");
     private final SelenideElement artists = $("#page-content [href='/artist']");
     private final SelenideElement museums = $("#page-content [href='/museum']");
+    private final SelenideElement page = $("[data-theme='gold-nouveau']");
 
     @Step("Проверка что выполнен успешный вход")
-    public MainPage checkThatUserIsAuthorized() {
+    public MainPage checkThatOpenMainPage() {
         mainTitle.shouldHave(text("Ваши любимые картины и художники всегда рядом"));
         return this;
     }
@@ -36,5 +45,18 @@ public class MainPage extends BasePage {
     public MuseumPage clickMuseums() {
         museums.click();
         return new MuseumPage();
+    }
+
+    @Step("Проверка темы")
+    @Nonnull
+    public MainPage checkTheme(BufferedImage expected) throws IOException {
+        BufferedImage actualImage = ImageIO.read(Objects.requireNonNull(page.screenshot()));
+        assertFalse(
+                new ScreenDiffResult(
+                        actualImage, expected
+                ),
+                ScreenShotTestExtension.ASSERT_SCREEN_MESSAGE
+        );
+        return this;
     }
 }

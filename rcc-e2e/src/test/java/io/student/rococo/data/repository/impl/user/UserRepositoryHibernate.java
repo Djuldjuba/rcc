@@ -18,7 +18,7 @@ public class UserRepositoryHibernate implements UserRepository {
 
     @Override
     public @NonNull UserEntity create(@NonNull UserEntity user) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.userdataJdbcUrl();
 
         UserEntity result = EntityManagers.doInTransaction(jdbcUrl, em -> {
             if (user.getId() != null) {
@@ -51,7 +51,7 @@ public class UserRepositoryHibernate implements UserRepository {
 
     @Override
     public @NonNull UserEntity update(@NonNull UserEntity user) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.userdataJdbcUrl();
 
         if (user.getId() == null) {
             throw new IllegalArgumentException("Cannot update user without ID");
@@ -67,7 +67,7 @@ public class UserRepositoryHibernate implements UserRepository {
 
     @Override
     public @NonNull Optional<UserEntity> findById(@NonNull UUID id) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.userdataJdbcUrl();
 
         Optional<UserEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 Optional.ofNullable(em.find(UserEntity.class, id))
@@ -78,7 +78,7 @@ public class UserRepositoryHibernate implements UserRepository {
 
     @Override
     public @NonNull Optional<UserEntity> findByUsername(@NonNull String username) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.userdataJdbcUrl();
 
         Optional<UserEntity> result = EntityManagers.doInQuery(jdbcUrl, em -> {
             try {
@@ -97,7 +97,7 @@ public class UserRepositoryHibernate implements UserRepository {
 
     @Override
     public @NonNull List<UserEntity> findAll() {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.userdataJdbcUrl();
 
         List<UserEntity> result = EntityManagers.doInQuery(jdbcUrl, em ->
                 em.createQuery("SELECT u FROM UserEntity u", UserEntity.class)
@@ -107,8 +107,23 @@ public class UserRepositoryHibernate implements UserRepository {
         return result != null ? result : Collections.emptyList();
     }
 
+    @Override
+    public void delete(@NonNull UserEntity user) {
+        String jdbcUrl = CFG.userdataJdbcUrl();
+
+        EntityManagers.doInTransaction(jdbcUrl, em -> {
+            if (em.contains(user)) {
+                em.remove(user);
+            } else {
+                em.remove(em.merge(user));
+            }
+            em.flush();
+            return null;
+        });
+    }
+
     public void deleteById(UUID id) {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.userdataJdbcUrl();
 
         EntityManagers.doInTransaction(jdbcUrl, em -> {
             UserEntity user = em.find(UserEntity.class, id);
@@ -120,7 +135,7 @@ public class UserRepositoryHibernate implements UserRepository {
     }
 
     public void deleteAll() {
-        String jdbcUrl = CFG.rococoApiUrl();
+        String jdbcUrl = CFG.userdataJdbcUrl();
 
         EntityManagers.doInTransaction(jdbcUrl, em -> {
             em.createQuery("DELETE FROM UserEntity").executeUpdate();

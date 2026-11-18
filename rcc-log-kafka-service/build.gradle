@@ -1,0 +1,36 @@
+plugins {
+    id 'org.springframework.boot'
+    id 'com.google.cloud.tools.jib'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
+    implementation 'org.springframework.boot:spring-boot-starter-kafka'
+
+    runtimeOnly "mysql:mysql-connector-java:${mysqlDriverVersion}"
+    runtimeOnly "org.flywaydb:flyway-mysql:${flywayMysqlVersion}"
+
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+jib {
+    from {
+        image = jibBaseImage
+    }
+    to {
+        image = 'rcc-log-kafka-service:latest'
+    }
+    container {
+        ports = ['8092']
+        jvmFlags = ['-Xms256m', '-Xmx512m']
+        creationTime = 'USE_CURRENT_TIMESTAMP'
+        environment = [
+                'SPRING_PROFILES_ACTIVE': 'docker'
+        ]
+    }
+}
