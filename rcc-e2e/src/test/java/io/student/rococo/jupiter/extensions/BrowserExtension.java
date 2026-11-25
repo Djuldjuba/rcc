@@ -43,6 +43,8 @@ public class BrowserExtension implements
         Configuration.pageLoadStrategy = "eager";
         Configuration.screenshots = false;
         Configuration.savePageSource = false;
+        
+        Configuration.browserSize = "1920x1080";
 
         if ("docker".equalsIgnoreCase(testEnv)) {
             Configuration.remote = "http://selenoid:4444/wd/hub";
@@ -51,13 +53,15 @@ public class BrowserExtension implements
             selenoidOptions.put("enableVNC", true);
             selenoidOptions.put("enableVideo", false);
             selenoidOptions.put("name", "rococo-test");
-            selenoidOptions.put("sessionTimeout", "10m");
+            selenoidOptions.put("sessionTimeout", "5m");
             selenoidOptions.put("timeZone", "Europe/Moscow");
+            selenoidOptions.put("screenResolution", "1920x1080x24");
 
             switch (browser) {
                 case "firefox" -> {
                     Configuration.browserVersion = "125.0";
                     FirefoxOptions options = new FirefoxOptions();
+                    options.addArguments("-width=1920", "-height=1080");
                     options.setCapability("selenoid:options", selenoidOptions);
                     Configuration.browserCapabilities = options;
                 }
@@ -67,14 +71,25 @@ public class BrowserExtension implements
                     options.addArguments(
                             "--no-sandbox",
                             "--disable-dev-shm-usage",
-                            "--disable-gpu"
+                            "--disable-gpu",
+                            "--window-size=1920,1080",
+                            "--force-device-scale-factor=1",
+                            "--high-dpi-support=1"
                     );
                     options.setCapability("selenoid:options", selenoidOptions);
                     Configuration.browserCapabilities = options;
                 }
             }
         } else {
-            // nothing
+            if ("chrome".equals(browser)) {
+                ChromeOptions options = new ChromeOptions();
+                options.addArguments(
+                        "--window-size=1920,1080",
+                        "--force-device-scale-factor=1",
+                        "--high-dpi-support=1"
+                );
+                Configuration.browserCapabilities = options;
+            }
         }
 
         configured = true;
@@ -97,9 +112,14 @@ public class BrowserExtension implements
     public void afterEach(ExtensionContext context) {
         try {
             clearBrowserState();
+        } catch (Exception ignored) {
         } finally {
-            if (WebDriverRunner.hasWebDriverStarted()) {
-                Selenide.closeWebDriver();
+            try {
+                if (WebDriverRunner.hasWebDriverStarted()) {
+                    Selenide.closeWebDriver();
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to close WebDriver: " + e.getMessage());
             }
         }
     }
@@ -153,15 +173,13 @@ public class BrowserExtension implements
                         )
                 );
 
-                String pageSource = WebDriverRunner.getWebDriver().getPageSource();
-                Allure.addAttachment(name + " (HTML)", "text/html", pageSource, ".html");
-
-                Path dir = Paths.get("build", "failed-html");
-                Files.createDirectories(dir);
-                Path file = dir.resolve(name.replaceAll("[^a-zA-Z0-9-_]", "_") + ".html");
-                Files.writeString(file, pageSource);
-
-                System.out.println("HTML: file:///" + file.toAbsolutePath().toString().replace("\\", "/"));
+//                String pageSource = WebDriverRunner.getWebDriver().getPageSource();
+//                Allure.addAttachment(name + " (HTML)", "text/html", pageSource, ".html");
+//
+//                Path dir = Paths.get("build", "failed-html");
+//                Files.createDirectories(dir);
+//                Path file = dir.resolve(name.replaceAll("[^a-zA-Z0-9-_]", "_") + ".html");
+//                Files.writeString(file, pageSource);
             }
         } catch (Exception ignored) {
         }

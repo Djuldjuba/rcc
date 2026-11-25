@@ -19,6 +19,9 @@ echo "### Stop and remove old containers ###"
 docker compose --profile test down --remove-orphans --volumes || true
 docker rm -f allure allure-ui selenoid selenoid-ui rcc-e2e 2>/dev/null || true
 
+echo "### Cleanup old Selenoid browser containers ###"
+docker ps -a --format '{{.ID}} {{.Image}}' | grep -E 'selenoid|chrome_stable' | awk '{print $1}' | xargs -r docker rm -f 2>/dev/null || true
+
 echo "### Java version ###"
 java --version
 
@@ -64,3 +67,11 @@ echo "  Allure report: http://localhost:5050/allure-docker-service/projects/rcc/
 echo "=============================================="
 echo "  Логи e2e: docker logs -f rcc-e2e"
 echo "=============================================="
+
+echo "### Waiting for e2e tests to finish ###"
+docker wait rcc-e2e || true
+
+echo "### e2e finished. Cleaning up browser containers ###"
+docker ps -a --format '{{.ID}} {{.Image}}' | grep -E 'selenoid|chrome_stable' | awk '{print $1}' | xargs -r docker rm -f 2>/dev/null || true
+
+echo "### Done ###"

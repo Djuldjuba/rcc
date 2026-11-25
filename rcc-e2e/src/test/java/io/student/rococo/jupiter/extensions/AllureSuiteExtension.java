@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class AllureSuiteExtension implements SuiteExtension {
@@ -72,14 +73,33 @@ public class AllureSuiteExtension implements SuiteExtension {
         }
 
         ObjectMapper mapper = new ObjectMapper();
-        ObjectNode root = mapper.createObjectNode();
-        ArrayNode resultsArray = mapper.createArrayNode();
+        HttpClient client = HttpClient.newHttpClient();
 
-        try (Stream<Path> files = Files.list(resultsPath)) {
-            files.filter(Files::isRegularFile).forEach(file -> {
+        final int BATCH_SIZE = 15;
+        List<Path> files;
+
+        try (Stream<Path> stream = Files.list(resultsPath)) {
+            files = stream.filter(Files::isRegularFile).toList();
+        }
+
+        if (files.isEmpty()) {
+            log.info("Нет файлов для отправки в {}", RESULTS_DIR);
+            return;
+        }
+
+        log.info("Найдено {} файлов для отправки, отправляю порциями по {}", files.size(), BATCH_SIZE);
+
+        for (int i = 0; i < files.size(); i += BATCH_SIZE) {
+            int end = Math.min(i + BATCH_SIZE, files.size());
+            List<Path> batch = files.subList(i, end);
+
+            ObjectNode root = mapper.createObjectNode();
+            ArrayNode resultsArray = mapper.createArrayNode();
+
+            for (Path file : batch) {
                 try {
                     byte[] content = Files.readAllBytes(file);
-                    if (content.length == 0) return;
+                    if (content.length == 0) continue;
 
                     String base64 = Base64.getEncoder().encodeToString(content);
                     ObjectNode fileNode = mapper.createObjectNode();
@@ -89,26 +109,22 @@ public class AllureSuiteExtension implements SuiteExtension {
                 } catch (IOException e) {
                     log.warn("Не удалось прочитать файл {}: {}", file, e.getMessage());
                 }
-            });
+            }
+
+            if (resultsArray.isEmpty()) continue;
+
+            root.set("results", resultsArray);
+            String json = mapper.writeValueAsString(root);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl + "/send-results?project_id=" + PROJECT_ID))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            log.info("Отправка порции {}-{}: {}", i + 1, end, response.statusCode());
         }
-
-        if (resultsArray.isEmpty()) {
-            log.info("Нет файлов для отправки в {}", RESULTS_DIR);
-            return;
-        }
-
-        root.set("results", resultsArray);
-        String json = mapper.writeValueAsString(root);
-
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl + "/send-results?project_id=" + PROJECT_ID))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        log.info("Отправка результатов: {}", response.statusCode());
     }
 
     private void generateReport(String apiUrl) throws IOException, InterruptedException {

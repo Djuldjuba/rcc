@@ -2,6 +2,9 @@ server:
   port: 9000
 
 spring:
+  web:
+    locale: ru_RU
+    locale-resolver: fixed
   datasource:
     url: jdbc:mysql://rcc-mysql:3306/rococo-auth?serverTimezone=UTC&createDatabaseIfNotExist=true
     username: root
@@ -23,7 +26,7 @@ spring:
                 - "authorization_code"
               redirect-uris:
                 - "http://rcc-client/authorized"
-                - "http://localhost:3000/authorized"   # оставляем для локального запуска
+                - "http://localhost:3000/authorized"
               post-logout-redirect-uris:
                 - "http://rcc-client/logout"
                 - "http://localhost:3000/logout"

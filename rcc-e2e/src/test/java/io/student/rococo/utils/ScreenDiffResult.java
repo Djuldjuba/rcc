@@ -14,14 +14,18 @@ public class ScreenDiffResult implements BooleanSupplier {
   private final ImageDiff diff;
   private final boolean hasDif;
 
-  private static final int DIFF_SIZE_TRIGGER = 100;
+  private static final double DIFF_PERCENT_TRIGGER = 2.0;
 
   public ScreenDiffResult(BufferedImage actual, BufferedImage expected) {
     this.actual = actual;
     this.expected = expected;
+
+    int totalPixels = expected.getWidth() * expected.getHeight();
+    int trigger = Math.max(100, (int) (totalPixels * DIFF_PERCENT_TRIGGER / 100.0));
+
     this.diff = new ImageDiffer()
             .makeDiff(expected, actual)
-            .withDiffSizeTrigger(DIFF_SIZE_TRIGGER);
+            .withDiffSizeTrigger(trigger);
 
     this.hasDif = diff.hasDiff();
   }

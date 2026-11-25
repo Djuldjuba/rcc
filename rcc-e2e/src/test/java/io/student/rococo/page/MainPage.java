@@ -13,6 +13,7 @@ import java.util.Objects;
 
 import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.sleep;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class MainPage extends BasePage<MainPage> {
@@ -22,6 +23,7 @@ public class MainPage extends BasePage<MainPage> {
     private final SelenideElement artists = $("#page-content [href='/artist']");
     private final SelenideElement museums = $("#page-content [href='/museum']");
     private final SelenideElement page = $("[data-theme='gold-nouveau']");
+    private final SelenideElement themeSwitcher = $(".lightswitch-track");
 
     @Step("Проверка что выполнен успешный вход")
     public MainPage checkThatOpenMainPage() {
@@ -57,6 +59,13 @@ public class MainPage extends BasePage<MainPage> {
                 ),
                 ScreenShotTestExtension.ASSERT_SCREEN_MESSAGE
         );
+        return this;
+    }
+
+    @Step("Установить тему {theme}")
+    public MainPage clickThemeSwitcher() {
+        themeSwitcher.click();
+        sleep(5000);
         return this;
     }
 }

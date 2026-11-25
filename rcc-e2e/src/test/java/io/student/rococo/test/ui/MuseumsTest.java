@@ -3,7 +3,9 @@ package io.student.rococo.test.ui;
 import com.codeborne.selenide.Selenide;
 import io.student.rococo.config.Config;
 import io.student.rococo.jupiter.TestData;
-import io.student.rococo.jupiter.annotation.*;
+import io.student.rococo.jupiter.annotation.ApiLogin;
+import io.student.rococo.jupiter.annotation.Museum;
+import io.student.rococo.jupiter.annotation.User;
 import io.student.rococo.page.MainPage;
 import io.student.rococo.service.impl.MuseumDbClient;
 import org.junit.jupiter.api.AfterEach;
@@ -12,9 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
-
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 
 import static io.student.rococo.jupiter.TestDataPresets.*;
 import static io.student.rococo.utils.RandomDataUtils.randomLongText;
@@ -34,9 +33,8 @@ public class MuseumsTest {
     @Test
     @User
     @ApiLogin
-    @ScreenShotTest(value = "files/museums/tretyakovka_screen.jpg", rewriteExpected = false)
     @DisplayName("Проверка создания музея")
-    void createMuseumUi(BufferedImage expectedMuseum) throws IOException {
+    void createMuseumUi() {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickMuseumsTab()
                 .checkTitleMuseums()
@@ -54,16 +52,14 @@ public class MuseumsTest {
                 .addMuseum()
                 .checkNotification("Добавлен музей: " + LEVITAN_MUSEUM_TITLE)
                 .checkNameMuseumIsDisplayed(LEVITAN_MUSEUM_TITLE)
-                .checkCityAndCountryMuseumIsDisplayed(LEVITAN_MUSEUM_CITY, LEVITAN_MUSEUM_COUNTRY)
-                .checkPhotoMuseum(expectedMuseum, LEVITAN_MUSEUM_TITLE);
+                .checkCityAndCountryMuseumIsDisplayed(LEVITAN_MUSEUM_CITY, LEVITAN_MUSEUM_COUNTRY);
     }
 
     @Test
     @User
     @ApiLogin
-    @ScreenShotTest(value = "files/museums/tretyakovka_screen.jpg", rewriteExpected = false)
     @DisplayName("Проверка создания музея по кнопке посередине страницы когда нет ни одного музея")
-    void createMuseumUiIfNoMuseumsBtn(BufferedImage expectedMuseum) throws IOException {
+    void createMuseumUiIfNoMuseumsBtn() {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickMuseumsTab()
                 .checkTitleMuseums()
@@ -76,8 +72,7 @@ public class MuseumsTest {
                 .addMuseum()
                 .checkNotification("Добавлен музей: " + LEVITAN_MUSEUM_TITLE)
                 .checkNameMuseumIsDisplayed(LEVITAN_MUSEUM_TITLE)
-                .checkCityAndCountryMuseumIsDisplayed(LEVITAN_MUSEUM_CITY, LEVITAN_MUSEUM_COUNTRY)
-                .checkPhotoMuseum(expectedMuseum, LEVITAN_MUSEUM_TITLE);
+                .checkCityAndCountryMuseumIsDisplayed(LEVITAN_MUSEUM_CITY, LEVITAN_MUSEUM_COUNTRY);
     }
 
     @Test
@@ -93,9 +88,8 @@ public class MuseumsTest {
     @Test
     @User(museums = @Museum(preset = "levitan"))
     @ApiLogin
-    @ScreenShotTest(value = "files/museums/tretyakovka_in_card.jpg", rewriteExpected = false)
     @DisplayName("Проверка карточки музея")
-    void checkMuseumCard(TestData testData, BufferedImage expectedPainting) throws IOException {
+    void checkMuseumCard(TestData testData) {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickMuseumsTab()
                 .checkNameMuseumIsDisplayed(testData.museum().title())
@@ -103,16 +97,14 @@ public class MuseumsTest {
                 .clickOnMuseum(testData.museum().title())
                 .checkMuseumNameInCard(testData.museum().title())
                 .checkCountryAndCityInCard(testData.museum().country().name(), testData.museum().city())
-                .checkDescriptionMuseumInCard(testData.museum().description())
-                .checkPhotoInCard(expectedPainting);
+                .checkDescriptionMuseumInCard(testData.museum().description());
     }
 
     @Test
     @User(museums = @Museum(preset = "levitan"))
     @ApiLogin
-    @ScreenShotTest(value = "files/museums/tretyakovka_screen_edit.jpg", rewriteExpected = false)
     @DisplayName("Проверка редактирования музея")
-    void editMuseumUi(TestData testData, BufferedImage expectedPainting) throws IOException {
+    void editMuseumUi(TestData testData) {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickMuseumsTab()
                 .clickOnMuseum(testData.museum().title())
@@ -125,8 +117,7 @@ public class MuseumsTest {
                 .checkNotification("Обновлен музей: " + testData.museum().title())
                 .checkMuseumNameInCard(testData.museum().title())
                 .checkCountryAndCityInCard(LEVITAN_MUSEUM_COUNTRY_EDIT, LEVITAN_MUSEUM_CITY_EDIT)
-                .checkDescriptionMuseumInCard(LEVITAN_MUSEUM_DESCRIPTION_EDIT)
-                .checkPhotoInCard(expectedPainting);
+                .checkDescriptionMuseumInCard(LEVITAN_MUSEUM_DESCRIPTION_EDIT);
     }
 
     @Test

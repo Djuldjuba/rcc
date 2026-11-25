@@ -12,7 +12,8 @@ public class RandomDataUtils {
     }
 
     public static String randomUserName() {
-        return faker.animal().name() + faker.animal().name();
+        String name = faker.animal().name() + faker.animal().name();
+        return name.replaceAll("\\s+", "").toLowerCase();
     }
 
     public static String randomCity() {

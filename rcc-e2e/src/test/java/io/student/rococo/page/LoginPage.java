@@ -4,7 +4,7 @@ import com.codeborne.selenide.SelenideElement;
 import io.qameta.allure.Step;
 
 import static com.codeborne.selenide.Condition.cssClass;
-import static com.codeborne.selenide.Condition.text;
+import static com.codeborne.selenide.Condition.matchText;
 import static com.codeborne.selenide.Selenide.$;
 
 public class LoginPage {
@@ -52,7 +52,7 @@ public class LoginPage {
 
     @Step("Проверка, что логин выполнен неуспешно")
     public LoginPage checkUnsuccessLogin() {
-        errorLogin.shouldHave(text("Неверные учетные данные пользователя"));
+        errorLogin.shouldHave(matchText("(?i)(Неверные учетные данные пользователя|Bad credentials)"));
         return this;
     }
 

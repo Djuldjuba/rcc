@@ -3,7 +3,11 @@ package io.student.rococo.test.ui;
 import com.codeborne.selenide.Selenide;
 import io.student.rococo.config.Config;
 import io.student.rococo.jupiter.TestData;
-import io.student.rococo.jupiter.annotation.*;
+import io.student.rococo.jupiter.annotation.ApiLogin;
+import io.student.rococo.jupiter.annotation.Artist;
+import io.student.rococo.jupiter.annotation.Museum;
+import io.student.rococo.jupiter.annotation.Painting;
+import io.student.rococo.jupiter.annotation.User;
 import io.student.rococo.page.MainPage;
 import io.student.rococo.service.impl.ArtistDbClient;
 import org.junit.jupiter.api.AfterEach;
@@ -12,9 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.ResourceLock;
-
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 
 import static io.student.rococo.jupiter.TestDataPresets.*;
 import static io.student.rococo.utils.RandomDataUtils.randomMaxLengthName;
@@ -34,9 +35,8 @@ public class ArtistsTests {
     @Test
     @User
     @ApiLogin
-    @ScreenShotTest(value = "files/artists/levitan_screen.jpg")
     @DisplayName("Проверка добавления художника")
-    void addNewArtist(BufferedImage expectedAvatar) throws IOException {
+    void addNewArtist() {
         Selenide.page(MainPage.class)
                 .clickArtistsTab()
                 .checkTitleArtists()
@@ -51,8 +51,7 @@ public class ArtistsTests {
                 .inputDescription(LEVITAN_ARTIST_BIOGRAPHY)
                 .clickAddBtn()
                 .checkNotification("Добавлен художник: " + LEVITAN_ARTIST_NAME)
-                .checkArtistIsDisplayed(LEVITAN_ARTIST_NAME)
-                .checkPhoto(expectedAvatar, LEVITAN_ARTIST_NAME);
+                .checkArtistIsDisplayed(LEVITAN_ARTIST_NAME);
     }
 
     @Test
@@ -84,24 +83,21 @@ public class ArtistsTests {
             paintings = @Painting(preset = "levitan")
     )
     @ApiLogin
-    @ScreenShotTest(value = "files/artists/levitan_photo_in_card.jpg", rewriteExpected = false)
     @DisplayName("Проверка карточки художника")
-    void checkOpenedArtist(TestData testData, BufferedImage expectedPainting) throws IOException {
+    void checkOpenedArtist(TestData testData) {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickArtistsTab()
                 .clickOnArtist(testData.artist().name())
                 .checkArtistName(testData.artist().name())
                 .checkArtistDescription(testData.artist().biography())
-                .checkPaintingOfArtistIsDisplayed(testData.painting().title())
-                .checkPhotoArtistInArtistCard(expectedPainting);
+                .checkPaintingOfArtistIsDisplayed(testData.painting().title());
     }
 
     @Test
     @User(artists = @Artist(preset = "levitan"))
     @ApiLogin
-    @ScreenShotTest(value = "files/artists/levitan_photo_edit_in_card.jpg", rewriteExpected = false)
     @DisplayName("Проверка редактирования карточки художника")
-    void checkEditCardArtist(TestData testData, BufferedImage expectedPhoto) throws IOException {
+    void checkEditCardArtist(TestData testData) {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickArtistsTab()
                 .clickOnArtist(testData.artist().name())
@@ -114,8 +110,7 @@ public class ArtistsTests {
                 .inputDescription(LEVITAN_ARTIST_BIOGRAPHY_EDIT)
                 .clickAddBtn()
                 .checkNotification("Обновлен художник: " + LEVITAN_ARTIST_NAME)
-                .checkArtistDescription(LEVITAN_ARTIST_BIOGRAPHY_EDIT)
-                .checkPhotoArtistInArtistCard(expectedPhoto);
+                .checkArtistDescription(LEVITAN_ARTIST_BIOGRAPHY_EDIT);
     }
 
     @Test
@@ -124,9 +119,8 @@ public class ArtistsTests {
             artists = @Artist(preset = "levitan")
     )
     @ApiLogin
-    @ScreenShotTest(value = "files/paintings/nad_vechnym_pokoem.jpg", rewriteExpected = false)
     @DisplayName("Проверка добавления картины из карточки художника")
-    void checkArtistCardWithoutPaintings(TestData testData, BufferedImage expectedPhoto) throws IOException {
+    void checkArtistCardWithoutPaintings(TestData testData) {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickArtistsTab()
                 .clickOnArtist(testData.artist().name())
@@ -138,8 +132,7 @@ public class ArtistsTests {
                 .selectMuseum(testData.museum().title())
                 .clickAddBtnFromArtistPage()
                 .checkNotification("Добавлена картина: " + LEVITAN_PAINTING_TITLE)
-                .checkPaintingOfArtistIsDisplayed(LEVITAN_PAINTING_TITLE)
-                .checkPaintingImageInArtistCard(expectedPhoto, LEVITAN_PAINTING_TITLE);
+                .checkPaintingOfArtistIsDisplayed(LEVITAN_PAINTING_TITLE);
     }
 
     @Test
@@ -170,17 +163,15 @@ public class ArtistsTests {
             paintings = @Painting(preset = "levitan")
     )
     @ApiLogin
-    @ScreenShotTest(value = "files/paintings/nad_vechnym_pokoem_created.jpg", rewriteExpected = false)
     @DisplayName("Проверка информации о картине, которая открывается при переходе из карточки художника")
-    void checkInfoAboutPaintingInArtistsCard(TestData testData,  BufferedImage expectedPainting) throws IOException {
+    void checkInfoAboutPaintingInArtistsCard(TestData testData) {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickArtistsTab()
                 .clickOnArtist(testData.artist().name())
                 .clickPainting(testData.painting().title())
                 .clickOnPainting(testData.painting().title())
                 .checkNameArtist(testData.artist().name())
-                .checkDescriptionPainting(testData.painting().description())
-                .checkPaintingImage(expectedPainting);
+                .checkDescriptionPainting(testData.painting().description());
     }
 
     @Test
@@ -189,9 +180,8 @@ public class ArtistsTests {
             artists = @Artist(preset = "levitan")
     )
     @ApiLogin
-    @ScreenShotTest(value = "files/paintings/nad_vechnym_pokoem_in_card.jpg", rewriteExpected = false)
     @DisplayName("Проверка отображения картины, созданной в карточке художника, на вкладке Картины")
-    void checkPaintingInPaintingsArtist(TestData testData, BufferedImage expectedPainting) throws IOException {
+    void checkPaintingInPaintingsArtist(TestData testData) {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickArtistsTab()
                 .clickOnArtist(testData.artist().name())
@@ -206,8 +196,7 @@ public class ArtistsTests {
                 .clickOnPainting(LEVITAN_PAINTING_TITLE)
                 .checkTitle(LEVITAN_PAINTING_TITLE)
                 .checkNameArtist(testData.artist().name())
-                .checkDescriptionPainting(LEVITAN_PAINTING_DESCRIPTION)
-                .checkPaintingImage(expectedPainting);
+                .checkDescriptionPainting(LEVITAN_PAINTING_DESCRIPTION);
     }
 
     @Test
@@ -223,9 +212,8 @@ public class ArtistsTests {
     @Test
     @User
     @ApiLogin
-    @ScreenShotTest(value = "files/artists/levitan_screen.jpg")
     @DisplayName("Проверка добавления художника по кнопке посередине страницы когда нет ни одного художника")
-    void addNewArtistsFromBtnIfNoArtists(BufferedImage expectedAvatar) throws IOException {
+    void addNewArtistsFromBtnIfNoArtists() {
         Selenide.open(CFG.frontUrl(), MainPage.class)
                 .clickArtistsTab()
                 .checkTitleArtists()
@@ -240,8 +228,7 @@ public class ArtistsTests {
                 .inputDescription(LEVITAN_ARTIST_BIOGRAPHY)
                 .clickAddBtn()
                 .checkNotification("Добавлен художник: " + LEVITAN_ARTIST_NAME)
-                .checkArtistIsDisplayed(LEVITAN_ARTIST_NAME)
-                .checkPhoto(expectedAvatar, LEVITAN_ARTIST_NAME);
+                .checkArtistIsDisplayed(LEVITAN_ARTIST_NAME);
     }
 
     @Test

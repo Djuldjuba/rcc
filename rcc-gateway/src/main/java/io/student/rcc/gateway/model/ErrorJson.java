@@ -1,4 +1,4 @@
-package io.student.rococo.model;
+package io.student.rcc.gateway.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -6,8 +6,8 @@ import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ErrorJson(
-    List<String> errors,
-    String message
+        List<String> errors,
+        String message
 ) {
   public static ErrorJson of(String... errors) {
     return new ErrorJson(List.of(errors), null);

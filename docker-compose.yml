@@ -233,7 +233,7 @@ services:
     restart: unless-stopped
     command: [
       "-conf", "/etc/selenoid/browsers.json",
-      "-limit", "3",
+      "-limit", "6",
       "-video-output-dir", "/opt/selenoid/video",
       "-log-output-dir", "/opt/selenoid/logs",
       "-container-network", "rcc-net"
@@ -290,6 +290,7 @@ services:
       - BROWSER=${BROWSER:-chrome}
       - TZ=Europe/Moscow
       - TEST_ENV=docker
+      - JAVA_TOOL_OPTIONS=-Xmx1536m -Xms512m
     depends_on:
       rcc-kafka:
         condition: service_healthy
