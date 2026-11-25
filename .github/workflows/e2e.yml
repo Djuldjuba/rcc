@@ -124,6 +124,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: allure-history
+          force_orphan: true
 
       - name: Add comment to PR with link to allure
         if: always() && steps.e2e.outcome != 'skipped'
