@@ -26,7 +26,6 @@ services:
     environment:
       KAFKA_NODE_ID: "1"
       KAFKA_PROCESS_ROLES: broker,controller
-      # без 0.0.0.0
       KAFKA_LISTENERS: PLAINTEXT://rcc-kafka:9092,CONTROLLER://rcc-kafka:9093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://rcc-kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
@@ -283,7 +282,6 @@ services:
     image: rcc-e2e:latest
     container_name: rcc-e2e
     environment:
-      - ALLURE_DOCKER_API=http://allure:5050/
       - BUILD_URL=${BUILD_URL:-local}
       - HEAD_COMMIT_MESSAGE=${HEAD_COMMIT_MESSAGE:-local build}
       - EXECUTION_TYPE=${EXECUTION_TYPE:-local}
@@ -291,6 +289,8 @@ services:
       - TZ=Europe/Moscow
       - TEST_ENV=docker
       - JAVA_TOOL_OPTIONS=-Xmx1536m -Xms512m
+    volumes:
+      - ./rcc-e2e/build/allure-results:/home/gradle/rcc/rcc-e2e/build/allure-results
     depends_on:
       rcc-kafka:
         condition: service_healthy

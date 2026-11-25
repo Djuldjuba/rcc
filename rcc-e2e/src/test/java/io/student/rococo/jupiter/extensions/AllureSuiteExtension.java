@@ -30,6 +30,12 @@ public class AllureSuiteExtension implements SuiteExtension {
 
     @Override
     public void afterSuite() {
+        if (System.getenv("GITHUB_ACTIONS") != null) {
+            log.info("Обнаружено окружение GitHub Actions — пропускаем отправку в Allure Docker Service, " +
+                    "результаты остаются локально для публикации на GitHub Pages");
+            return;
+        }
+
         String baseUrl = System.getenv("ALLURE_DOCKER_API");
         if (baseUrl == null || baseUrl.isBlank()) {
             log.info("ALLURE_DOCKER_API не задан, пропускаю отправку результатов");

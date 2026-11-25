@@ -1,0 +1,153 @@
+name: e2e
+
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+
+permissions:
+  contents: write
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_PROFILES: test
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      EXECUTION_TYPE: github
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      # === Сборка бэкендов через jibBuildTar + docker load (как в docker-compose-e2e.sh) ===
+      - name: Build backends
+        id: build
+        run: |
+          ./gradlew clean jibBuildTar -x :rcc-e2e:test -Duser.timezone=UTC
+          for module in rcc-auth rcc-gateway rcc-artist rcc-painting rcc-museum rcc-geo rcc-userdata rcc-log-kafka-service; do
+            TAR_PATH="$module/build/jib-image.tar"
+            if [ -f "$TAR_PATH" ]; then
+              echo "Loading $TAR_PATH ..."
+              docker load -i "$TAR_PATH"
+            else
+              echo "WARNING: $TAR_PATH not found!"
+            fi
+          done
+
+      - name: Report test results
+        uses: dorny/test-reporter@v2
+        if: always() && steps.build.outcome != 'skipped'
+        with:
+          name: Unit & Integration tests
+          path: '**/build/test-results/test/TEST-*.xml'
+          reporter: java-junit
+          badge-title: 'unit & integration tests'
+
+      - name: Add comment to PR with link to unit tests results
+        if: always() && steps.build.outcome != 'skipped'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const buildStatus = '${{ steps.build.outcome }}'
+            const message = buildStatus === 'success'
+              ? `✅ UNIT & INTEGRATION TESTS PASSED`
+              : `🔴 UNIT & INTEGRATION TESTS FAILED`
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            })
+
+      - name: Pull browsers
+        run: |
+          docker pull twilio/selenoid:chrome_stable_147
+
+      - name: Get the last commit message
+        run: |
+          echo "HEAD_COMMIT_MESSAGE=$(git log -1 --format=%s ${{ github.event.pull_request.head.sha }})" >> $GITHUB_ENV
+
+      - name: Prepare screenshot dir
+        run: |
+          mkdir -p rcc-e2e/.screen-output/screenshots/selenoid
+
+      - name: Run e2e-tests
+        id: e2e
+        run: |
+          docker compose --profile test up -d
+          docker ps -a
+          docker wait rcc-e2e
+          exit_code=$(docker inspect -f '{{.State.ExitCode}}' rcc-e2e)
+          echo "E2E_EXIT_CODE=$exit_code" >> $GITHUB_OUTPUT
+          echo "### Test logs ###"
+          docker logs rcc-e2e
+          if [ "$exit_code" -eq "0" ]; then
+            echo "Tests passed successfully!"
+            exit 0
+          else
+            echo "Tests failed!"
+            exit 1
+          fi
+
+      # === Публикация Allure-отчёта на GitHub Pages ===
+
+      - name: Get Allure history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Generate Allure Report
+        uses: simple-elf/allure-report-action@v1.13
+        if: always()
+        with:
+          gh_pages: gh-pages
+          allure_results: rcc-e2e/build/allure-results
+          allure_history: allure-history
+
+      - name: Deploy report to Github Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+
+      - name: Add comment to PR with link to allure
+        if: always() && steps.e2e.outcome != 'skipped'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+            const runNumber = context.runNumber
+            const reportUrl = `https://${owner}.github.io/${repo}/${runNumber}/index.html`
+            const message = `📊 Allure report: [open report](${reportUrl})`
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            })
+
+      - name: Upload screenshots artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots-${{ github.run_id }}
+          path: |
+            rcc-e2e/.screen-output/screenshots/selenoid/**/*.png
+          if-no-files-found: warn
+          retention-days: 14
