@@ -6,6 +6,8 @@ on:
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   e2e-tests:
@@ -29,10 +31,10 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # === Сборка бэкендов через jibBuildTar + docker load (как в docker-compose-e2e.sh) ===
       - name: Build backends
         id: build
         run: |
+          chmod +x gradlew
           ./gradlew clean jibBuildTar -x :rcc-e2e:test -Duser.timezone=UTC
           for module in rcc-auth rcc-gateway rcc-artist rcc-painting rcc-museum rcc-geo rcc-userdata rcc-log-kafka-service; do
             TAR_PATH="$module/build/jib-image.tar"
@@ -98,8 +100,6 @@ jobs:
             echo "Tests failed!"
             exit 1
           fi
-
-      # === Публикация Allure-отчёта на GitHub Pages ===
 
       - name: Get Allure history
         uses: actions/checkout@v4
