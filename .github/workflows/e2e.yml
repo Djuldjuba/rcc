@@ -31,24 +31,15 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Build backends
-        id: build
+      - name: Run Unit Tests
+        id: unit-tests
         run: |
           chmod +x gradlew
-          ./gradlew clean jibBuildTar -x :rcc-e2e:test -Duser.timezone=UTC
-          for module in rcc-auth rcc-gateway rcc-artist rcc-painting rcc-museum rcc-geo rcc-userdata rcc-log-kafka-service; do
-            TAR_PATH="$module/build/jib-image.tar"
-            if [ -f "$TAR_PATH" ]; then
-              echo "Loading $TAR_PATH ..."
-              docker load -i "$TAR_PATH"
-            else
-              echo "WARNING: $TAR_PATH not found!"
-            fi
-          done
+          ./gradlew test -x :rcc-e2e:test -Duser.timezone=UTC
 
       - name: Report test results
         uses: dorny/test-reporter@v2
-        if: always() && steps.build.outcome != 'skipped'
+        if: always() && steps.unit-tests.outcome != 'skipped'
         with:
           name: Unit & Integration tests
           path: '**/build/test-results/test/TEST-*.xml'
@@ -56,11 +47,11 @@ jobs:
           badge-title: 'unit & integration tests'
 
       - name: Add comment to PR with link to unit tests results
-        if: always() && steps.build.outcome != 'skipped'
+        if: always() && steps.unit-tests.outcome != 'skipped'
         uses: actions/github-script@v7
         with:
           script: |
-            const buildStatus = '${{ steps.build.outcome }}'
+            const buildStatus = '${{ steps.unit-tests.outcome }}'
             const message = buildStatus === 'success'
               ? `✅ UNIT & INTEGRATION TESTS PASSED`
               : `🔴 UNIT & INTEGRATION TESTS FAILED`
@@ -70,6 +61,21 @@ jobs:
               repo: context.repo.repo,
               body: message
             })
+
+      - name: Build backends
+        id: build
+        run: |
+          chmod +x gradlew
+          ./gradlew clean jibBuildTar -x test -x :rcc-e2e:test -Duser.timezone=UTC
+          for module in rcc-auth rcc-gateway rcc-artist rcc-painting rcc-museum rcc-geo rcc-userdata rcc-log-kafka-service; do
+            TAR_PATH="$module/build/jib-image.tar"
+            if [ -f "$TAR_PATH" ]; then
+              echo "Loading $TAR_PATH ..."
+              docker load -i "$TAR_PATH"
+            else
+              echo "WARNING: $TAR_PATH not found!"
+            fi
+          done
 
       - name: Pull browsers
         run: |
