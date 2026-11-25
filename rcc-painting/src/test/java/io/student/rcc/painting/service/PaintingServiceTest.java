@@ -253,7 +253,6 @@ class PaintingServiceTest {
         Page<PaintingEntity> page = new PageImpl<>(List.of(entity), PageRequest.of(0, 9), 1);
 
         when(paintingRepository.findAll(any(Pageable.class))).thenReturn(page);
-        // Клиент не найден — сработает fallback "Artist <id>"
         when(artistGrpcClient.getArtistName(anyString())).thenReturn(Optional.empty());
         when(paintingMapper.toResponse(eq(entity), anyString(), any()))
                 .thenReturn(new PaintingResponse(

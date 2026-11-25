@@ -26,10 +26,11 @@ grpc:
     max-inbound-message-size: 20971520
     security:
       enabled: false
-    client:
-      country:
-        address: 'static://localhost:19094'
-        negotiation-type: plaintext
+
+  client:
+    country:
+      address: 'static://localhost:19094'
+      negotiation-type: plaintext
 
 logging:
   level:

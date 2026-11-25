@@ -1,5 +1,6 @@
 package io.student.rcc.museum.service;
 
+import io.student.rcc.museum.client.CountryGrpcClient;
 import io.student.rcc.museum.data.entity.MuseumEntity;
 import io.student.rcc.museum.data.repository.MuseumRepository;
 import io.student.rcc.museum.domain.CreateMuseumRequest;
@@ -7,6 +8,7 @@ import io.student.rcc.museum.domain.MuseumResponse;
 import io.student.rcc.museum.domain.UpdateMuseumRequest;
 import io.student.rcc.museum.exception.ResourceNotFoundException;
 import io.student.rcc.museum.mapper.MuseumMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,10 +38,17 @@ class MuseumServiceTest {
     @Mock
     private MuseumMapper museumMapper;
 
+    @Mock
+    private CountryGrpcClient countryGrpcClient;
+
     @InjectMocks
     private MuseumService museumService;
 
-    // ---------- getMuseumById ----------
+    @BeforeEach
+    void setUp() {
+        lenient().when(countryGrpcClient.getCountryName(anyString()))
+                .thenReturn(Optional.of("Country"));
+    }
 
     @Test
     void getMuseumByIdShouldReturn() {
@@ -73,8 +82,6 @@ class MuseumServiceTest {
         verify(museumRepository).findById(id);
         verifyNoInteractions(museumMapper);
     }
-
-    // ---------- getAllMuseums ----------
 
     @Test
     void getAllMuseumsShouldReturnMappedList() {
@@ -117,8 +124,6 @@ class MuseumServiceTest {
         verify(museumRepository).findAll();
         verifyNoInteractions(museumMapper);
     }
-
-    // ---------- getMuseumsPage ----------
 
     @Test
     void getMuseumsPageWithoutTitleShouldCallFindAll() {
@@ -166,8 +171,6 @@ class MuseumServiceTest {
         verify(museumRepository, never()).findAll(any(Pageable.class));
     }
 
-    // ---------- getMuseumsByCountry ----------
-
     @Test
     void getMuseumsByCountryShouldReturnPage() {
         UUID countryId = UUID.randomUUID();
@@ -189,8 +192,6 @@ class MuseumServiceTest {
         verify(museumRepository).findAllByCountryId(eq(countryId), any(Pageable.class));
         verify(museumMapper).toResponse(eq(entity), anyString());
     }
-
-    // ---------- createMuseum ----------
 
     @Test
     void createMuseumShouldSaveAndReturnResponse() {
@@ -233,8 +234,6 @@ class MuseumServiceTest {
         verify(museumRepository).save(entityToSave);
         verify(museumMapper).toResponse(eq(savedEntity), anyString());
     }
-
-    // ---------- updateMuseum ----------
 
     @Test
     void updateMuseumShouldUpdateAndReturnResponse() {
@@ -294,8 +293,6 @@ class MuseumServiceTest {
         verify(museumRepository, never()).save(any());
         verifyNoInteractions(museumMapper);
     }
-
-    // ---------- deleteMuseum ----------
 
     @Test
     void deleteMuseumShouldDeleteWhenExists() {

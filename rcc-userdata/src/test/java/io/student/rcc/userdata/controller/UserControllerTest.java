@@ -33,8 +33,6 @@ class UserControllerTest {
 
     private final ObjectMapper om = new ObjectMapper();
 
-    // ---------- GET /api/user ----------
-
     @Test
     @Sql(FIXTURE)
     void shouldReturnCurrentUser() throws Exception {
@@ -63,8 +61,6 @@ class UserControllerTest {
         mockMvc.perform(get("/api/user"))
                 .andExpect(status().isUnauthorized());
     }
-
-    // ---------- POST /api/user ----------
 
     @Test
     @Sql(FIXTURE)
