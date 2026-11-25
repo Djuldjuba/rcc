@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -38,12 +39,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public UserResponse createNewUserIfNotPresent(String username) {
-        UserEntity entity = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Пользователь", "username", username + " (ожидается создание через Kafka)"));
-        return userMapper.toResponse(entity);
+        return userRepository.findByUsername(username)
+                .map(userMapper::toResponse)
+                .orElseGet(() -> {
+                    UserEntity entity = userMapper.toEntity(username);
+                    entity.setId(UUID.randomUUID());
+                    UserEntity saved = userRepository.save(entity);
+                    return userMapper.toResponse(saved);
+                });
     }
 
     @Override
