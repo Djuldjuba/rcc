@@ -49,7 +49,7 @@ jobs:
           fail-on-error: false
           fail-on-empty: false
 
-      - name: Add comment to PR with link to unit tests results
+      - name: Add comment to PR with unit tests status
         if: always() && steps.unit-tests.outcome != 'skipped'
         uses: actions/github-script@v7
         with:
@@ -113,16 +113,23 @@ jobs:
         run: |
           docker compose --profile test up -d --wait
           docker ps -a
+
+          echo "### Waiting for e2e tests to finish ###"
+          docker wait rcc-e2e || true
+
           exit_code=$(docker inspect -f '{{.State.ExitCode}}' rcc-e2e)
           echo "E2E_EXIT_CODE=$exit_code" >> $GITHUB_OUTPUT
+
           echo "### Test logs ###"
-          docker logs rcc-e2e 2>&1 | grep -v "Hibernate:" | grep -v "p6spy" | grep -v ">>> JDBC URL" | grep -v "Extracted JDBC value" | tail -n 100
+          docker logs rcc-e2e 2>&1 | grep -v "Hibernate:" | grep -v "p6spy" | grep -v ">>> JDBC URL" | grep -v "Extracted JDBC value" | tail -n 400
+
           if [ "$exit_code" -eq "0" ]; then
             echo "Tests passed successfully!"
           else
-            echo "Tests failed, but pipeline will continue to generate report."
+            echo "Tests failed with exit code $exit_code"
           fi
-          exit 0
+
+          exit $exit_code
 
       - name: Get Allure history
         uses: actions/checkout@v4
@@ -140,6 +147,7 @@ jobs:
           gh_pages: gh-pages
           allure_results: rcc-e2e/build/allure-results
           allure_history: allure-history
+          keep_reports: 20
 
       - name: Deploy report to Github Pages
         if: always()
@@ -151,7 +159,7 @@ jobs:
           publish_dir: allure-history
           force_orphan: true
 
-      - name: Add comment to PR with link to allure
+      - name: Add comment to PR with Allure report
         if: always() && steps.e2e.outcome != 'skipped'
         uses: actions/github-script@v7
         with:
