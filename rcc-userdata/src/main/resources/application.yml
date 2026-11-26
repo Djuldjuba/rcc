@@ -54,3 +54,4 @@ logging:
     root: INFO
     io.student.rcc: DEBUG
     org.springframework.kafka: INFO
+    org.hibernate.internal.util.EntityPrinter: WARN

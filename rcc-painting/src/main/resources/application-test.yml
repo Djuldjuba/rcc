@@ -44,3 +44,4 @@ logging:
     root: WARN
     org.springframework: WARN
     org.hibernate: WARN
+    org.hibernate.internal.util.EntityPrinter: WARN

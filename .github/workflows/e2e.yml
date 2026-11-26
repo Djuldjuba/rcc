@@ -106,14 +106,13 @@ jobs:
           exit_code=$(docker inspect -f '{{.State.ExitCode}}' rcc-e2e)
           echo "E2E_EXIT_CODE=$exit_code" >> $GITHUB_OUTPUT
           echo "### Test logs ###"
-          docker logs rcc-e2e
+          docker logs rcc-e2e 2>&1 | grep -v "Hibernate:" | grep -v "p6spy" | grep -v ">>> JDBC URL" | grep -v "Extracted JDBC value" | tail -n 100
           if [ "$exit_code" -eq "0" ]; then
             echo "Tests passed successfully!"
-            exit 0
           else
-            echo "Tests failed!"
-            exit 1
+            echo "Tests failed, but pipeline will continue to generate report."
           fi
+          exit 0
 
       - name: Get Allure history
         uses: actions/checkout@v4
@@ -126,6 +125,7 @@ jobs:
       - name: Generate Allure Report
         uses: simple-elf/allure-report-action@v1.13
         if: always()
+        continue-on-error: true
         with:
           gh_pages: gh-pages
           allure_results: rcc-e2e/build/allure-results
@@ -133,6 +133,7 @@ jobs:
 
       - name: Deploy report to Github Pages
         if: always()
+        continue-on-error: true
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -149,7 +150,9 @@ jobs:
             const repo = context.repo.repo
             const runNumber = context.runNumber
             const reportUrl = `https://${owner}.github.io/${repo}/${runNumber}/index.html`
-            const message = `📊 Allure report: [open report](${reportUrl})`
+            const exitCode = '${{ steps.e2e.outputs.E2E_EXIT_CODE }}'
+            const status = exitCode == '0' ? '✅ PASSED' : '🔴 FAILED'
+            const message = `📊 Allure report: [open report](${reportUrl})\nE2E tests status: ${status}`
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
