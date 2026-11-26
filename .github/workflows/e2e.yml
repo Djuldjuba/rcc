@@ -77,6 +77,10 @@ jobs:
             fi
           done
 
+      - name: Build frontend
+        run: |
+          docker build -t rcc-client:latest ./rcc-client
+
       - name: Pull browsers
         run: |
           docker pull twilio/selenoid:chrome_stable_147
