@@ -87,7 +87,7 @@ jobs:
 
       - name: Pull browsers
         run: |
-          docker pull twilio/selenoid:chrome_stable_147
+          docker pull twilio/selenoid:chrome_stable_135
 
       - name: Get the last commit message
         run: |
