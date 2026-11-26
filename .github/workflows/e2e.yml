@@ -132,23 +132,26 @@ jobs:
 
           exit 0
 
-      - name: Get Allure history
-        uses: actions/checkout@v4
+      - name: Install Allure
         if: always()
-        continue-on-error: true
-        with:
-          ref: gh-pages
-          path: gh-pages
+        run: |
+          wget -q https://github.com/allure-framework/allure2/releases/download/2.32.0/allure-2.32.0.tgz
+          tar -zxf allure-2.32.0.tgz
+          sudo mv allure-2.32.0 /opt/allure
+          echo "/opt/allure/bin" >> $GITHUB_PATH
 
       - name: Generate Allure Report
-        uses: simple-elf/allure-report-action@v1.13
         if: always()
-        continue-on-error: true
-        with:
-          gh_pages: gh-pages
-          allure_results: rcc-e2e/build/allure-results
-          allure_history: allure-history
-          keep_reports: 20
+        run: |
+          mkdir -p allure-history
+          if [ -d "rcc-e2e/build/allure-results" ]; then
+            allure generate rcc-e2e/build/allure-results --clean -o allure-history/${{ github.run_number }}
+            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=${{ github.run_number }}/index.html"></head></html>' > allure-history/index.html
+          else
+            echo "No allure-results found"
+            mkdir -p allure-history
+            echo "<h1>No report</h1>" > allure-history/index.html
+          fi
 
       - name: Deploy report to Github Pages
         if: always()
