@@ -1,311 +1,353 @@
 # Rococo
 
-Приветствую тебя, мой дорогой студент!
-Если ты это читаешь - то ты собираешься сделать первый шаг в написании диплома QA.GURU Advanced.
+Микросервисное веб-приложение «галерея искусства» — художники, картины, музеи, страны и профили пользователей.
 
-Это один из двух вариантов дипломной работы - второй
-расположен [тут, называется Rangiffler](https://github.com/qa-guru/rfr)
-Проекты отличаются как по своей механике, так и технологиям (Rococo использует классический REST на frontend,
-тогда как Rangiffler использует GraphQL). Следует сказать, что Rangiffler может отказаться немного сложнее именно из-за
-GraphQL.
-Выбор за тобой!
+Frontend — **SvelteKit**. Backend — **Spring Boot 4** + **gRPC** + **OAuth 2.0**.  
+Единая точка входа для фронта — API Gateway. Между сервисами — gRPC. Асинхронные события (регистрация / обновление пользователя) — Kafka.
 
-Далее я опишу основные направления работы, но помни, что этот диплом - не шаблонная работа, а место
-для творчества - прояви себя!
+---
 
-Кстати, Rococo - стиль в искусстве (живописи и не только), а значит дело пахнет микросервисами,
-отвечающими за художников, их картины и музеи. И тестами на все это, которые должны стать искусством.
+## Архитектура
 
-# Что будет являться готовым дипломом?
+```
+┌──────────────┐
+│  rcc-client  │  SvelteKit (SPA)
+│   :3000      │
+└──────┬───────┘
+       │ REST
+       ▼
+┌──────────────┐
+│ rcc-gateway  │  API Gateway
+│   :8085      │
+└──────┬───────┘
+       │ gRPC
+       ├──────────────────┬──────────────────┬──────────────────┬──────────────────┐
+       ▼                  ▼                  ▼                  ▼                  ▼
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│ rcc-artist  │   │rcc-painting │   │ rcc-museum  │   │   rcc-geo   │   │rcc-userdata │
+│ REST :8086  │   │ REST :8087  │   │ REST :8088  │   │ REST :8091  │   │ REST :8090  │
+│ gRPC :9090  │   │ gRPC :9091  │   │ gRPC :9093  │   │ gRPC :9094  │   │ gRPC :9095  │
+└─────────────┘   └─────────────┘   └──────┬──────┘   └─────────────┘   └──────┬──────┘
+                                           │ gRPC                              │
+                                           └───────────────────────────────────┘
+                                                         ▲
+┌──────────────┐                                         │
+│   rcc-auth   │  OAuth2 / OIDC Authorization Server     │
+│    :9000     │─────────────────────────────────────────┘
+└──────┬───────┘
+       │ Kafka (users, user-updates)
+       ▼
+┌────────────────────────┐
+│ rcc-log-kafka-service  │  Consumer логов
+│        :8092           │
+└────────────────────────┘
+```
+Подробности по каждому сервису — в соответствующих `README.md` внутри модулей.
 
-Тут все просто, диплом глобально требует от тебя реализовать три вещи:
+---
 
-- Реализовать бэкенд на микросервисах (Spring boot, но если вдруг есть желание использовать что-то другое - мы не
-  против)
-- Реализовать полноценное покрытие тестами микросервисов и frontend (если будут какие-то
-  unit и integration-тесты - это большой плюс!)
-- Красиво оформить репозиторий на гихабе, что бы любой, кто зайдет на твою страничку, смог понять,
-  как все запустить, как прогнать тесты. Удели внимание этому пункту. Если я не смогу все запустить по твоему README -
-  диплом останется без проверки
+## Минимальные предусловия для работы с проектом
 
-# С чего начать?
+#### 0. Если у вас ОС Windows
 
-Мы подготовили для тебя полностью рабочий frontend, а также минимально работающий сервис auth и базовую реализацию
-сервиса rcc-api.
-Сервис rcc-api реализован как монолитный REST API backend, где часть данных (художники и картины) замокана через JSON
-файлы,
-а часть (музеи, страны, пользователи) работает с реальной базой данных MySQL. Это позволяет сразу увидеть механику
-проекта Rococo
-и понять, какие запросы необходимо реализовать в полноценном микросервисном бэкенде.
+Во-первых, и в-главных, необходимо использовать [bash terminal](https://www.geeksforgeeks.org/working-on-git-bash/), а
+не powershell.
+[Полезное и короткое видео о git bash](https://www.youtube.com/watch?v=zM9Mb-otqww)
+Обязательно добавьте bash терминал в [качестве терминала в вашей IDE (IDEA, PyCharm)](https://stackoverflow.com/questions/20573213/embed-git-bash-in-pycharm-as-external-tool-and-work-with-it-in-pycharm-window-w)
+Во-вторых, если у вас что-то не работает - пишите, будем вместе дополнять README, т.к. изначально
+проект разработан под *nix.
 
-И самое главное - у тебя есть проект niffler, который будет выступать образцом для подражания в разработке
-микросервисов.
-Тестовое покрытие niffler, которого мы добьемся во время курса, однако, не будет полноценным - учтите это при написании
-тестов на Rococo - это,
-все-таки, диплом для SDET / Senior QA Automation и падать в грязь лицом с десятком тестов на весь сервис
-точно не стоит. Итак, приступим!
+#### 1. Установить Docker (если не установлен)
 
-#### 1. Запусти базу данных MySQL:
+Мы будем использовать Docker для БД (MySQL), Kafka, а также для запуска всего стека через docker-compose.
 
-```posh
-Dmitriis-MacBook-Pro rococo % bash localenv.sh
+[Установка на Windows](https://docs.docker.com/desktop/install/windows-install/)
+
+[Установка на Mac](https://docs.docker.com/desktop/install/mac-install/) (Для ARM и Intel разные пакеты)
+
+[Установка на Linux](https://docs.docker.com/desktop/install/linux-install/)
+
+После установки и запуска docker daemon необходимо убедиться в работе команд docker, например `docker -v`:
+
+```bash
+docker -v
+Docker version 27.x.x, build ...
 ```
 
-Скрипт запустит Docker контейнер с MySQL, создание необходимых баз данных для rococo-auth и rococo-api произойдет при
-старте этих бэкендов.
+#### 2. Спуллить контейнеры mysql:8.4.7, zookeeper и kafka версии 7.7.7
 
-#### 2. Запусти сервис авторизации rococo-auth:
-
-```posh
-Dmitriis-MacBook-Pro rococo % cd rcc-auth
-Dmitriis-MacBook-Pro rcc-auth % gradle bootRun
+```bash
+docker pull mysql:8.4.7
+docker pull confluentinc/cp-zookeeper:7.7.7
+docker pull confluentinc/cp-kafka:7.7.7
 ```
 
-Или запусти класс с методом main руками. Auth будет доступен на порту 9000: http://localhost:9000
+После `pull` вы увидите спуленные image командой `docker images`:
 
-#### 3. Запусти сервис API rococo-api:
-
-```posh
-Dmitriis-MacBook-Pro rococo % cd rcc-api
-Dmitriis-MacBook-Pro rcc-api % gradle bootRun
+```bash
+docker images
+REPOSITORY                    TAG       IMAGE ID       CREATED        SIZE
+mysql                         8.4.7     ...            ...            ...
+confluentinc/cp-kafka         7.7.7     ...            ...            ...
+confluentinc/cp-zookeeper     7.7.7     ...            ...            ...
 ```
 
-Или запусти класс с методом main руками. API будет доступен на порту 8080: http://localhost:8080
+#### 3. Создать volume для сохранения данных из БД в docker на вашем компьютере
 
-Сервис rcc-api содержит:
-
-- Mock контроллеры для художников и картин (данные из JSON файлов в resources/mock/)
-- Реальные контроллеры для музеев, стран и пользователей (работают с MySQL)
-- OAuth 2.0 Resource Server защиту для POST/PATCH/DELETE операций
-
-#### 4. Обнови зависимости и запускай фронт Rococo:
-
-```posh
-Dmitriis-MacBook-Pro rococo % cd rcc-client
-Dmitriis-MacBook-Pro rcc-client % npm i
-Dmitriis-MacBook-Pro rcc-client % npm run dev
+```bash
+docker volume create rcc-volume
 ```
 
-Фронт стартанет в твоем браузере на порту 3000: http://localhost:3000/
+#### 4. Запустить БД, zookeeper и kafka
 
-Теперь можно залогиниться через кнопку "Войти" и работать с приложением. GET запросы доступны без авторизации,
-а для создания/редактирования данных потребуется OAuth токен, который выдается после успешной авторизации.
+Запустив скрипт (для Windows необходимо использовать bash terminal: gitbash, cygwin или wsl):
 
-# Что дальше?
-
-#### 1. Изучи существующую реализацию rcc-api
-
-Сервис rcc-api уже содержит базовую реализацию REST API:
-
-- Mock контроллеры для художников и картин (ArtistMockController, PaintingMockController)
-- Реальные контроллеры для музеев, стран и пользователей с JPA репозиториями
-- Security конфигурацию OAuth 2.0 Resource Server
-- Модели данных (Entity и JSON DTO)
-- Flyway миграции для базы данных
-
-Это хорошая отправная точка для понимания структуры API и требований фронтенда.
-
-#### 2. Спроектируй микросервисную архитектуру
-
-Например, можно предложить вот такую структуру сервисов:
-
-<img src="services.png" width="600">
-
-ВАЖНО! Картинка - не догма, а лишь один из вариантов для примера.
-Взаимодействие между gateway и всеми остальными сервисами можно сделать с помощью
-REST, gRPC или SOAP. Я бы посоветовал отдать предпочтение gRPC.
-
-Возможные варианты разбиения:
-
-- rococo-gateway - единая точка входа для фронтенда
-- rococo-artist - сервис управления художниками
-- rococo-painting - сервис управления картинами
-- rococo-museum - сервис управления музеями
-- rococo-userdata - сервис управления пользовательскими данными
-
-#### 3. Реализуй микросервисы постепенно
-
-Начни с одного микросервиса, например rococo-artist:
-
-- Создай новый Spring Boot модуль
-- Перенеси логику из ArtistMockController в полноценный сервис с БД
-- Настрой взаимодействие с gateway через выбранный протокол (REST/gRPC)
-- Добавь Flyway миграции для таблицы artists
-
-Затем повтори процесс для остальных сервисов.
-
-#### 4. Докеризация сервисов
-
-Чем раньше у вас получится запустить в докере фронт и все бэкенды, тем проще будет дальше.
-На самом деле, докеризация не является строго обязательным требованием, но если вы хотите в будущем
-задеплоить свой сервис на прод, прикрутить CI/CD, без этого никак не обойдется.
-
-Я советую использовать плагин jib - как в niffler, для бэкендов, и самописный dockerfile для фронта.
-Фронтенд использует фреймворк Svelte, но докеризация там работает ровно так же, как и для React в Niffler.
-
-#### 5. Выбери протокол взаимодействия между сервисами
-
-В поставляемом фронтенде классический REST. А вот взаимодействие между микросервисами можно
-делать как угодно! REST, gRPC, SOAP. Делай проект я, однозначно взял бы gRPC - не писать руками кучу
-model-классов, получить перформанс и простое написание тестов. Стоит сказать, что здесь не
-понадобятся streaming rpc, и все ограничится простыми унарными запросами. Однако если вы хотите
-использовать REST или SOAP - мы не будем возражать.
-
-#### 6. Реализуй полноценный микросервисный backend
-
-Это место где, внезапно, СОВА НАРИСОВАНА!
-На самом деле, концептуально и технически каждый сервис будет похож на что-то из niffler, поэтому
-главное внимательность и аккуратность. Любые отхождения от niffler возможны - ты можешь захотеть
-использовать, например, NoSQL базы или по другому организовать конфигурацию / структуру проекта -
-никаких ограничений, лишь бы сервис выполнял свое прямое назначение.
-
-Используй существующий rcc-api как референс для понимания API контрактов и бизнес-логики.
-
-##### Особенности реализации backend
-
-###### Работа с пагинацией
-
-Проект Rococo использует пагинацию (чтобы грузить данные с бэка по частям), а это значит что в контроллерах должны быть
-реализованы
-Pageable endpoints. В rcc-api уже есть примеры такой реализации.
-
-Пример контроллера:
-
-```java
-  @GetMapping()
-  public Page<ArtistJson> getAll(@RequestParam(required = false) String name,
-                                 @PageableDefault Pageable pageable) {
-    return artistService.getAll(name, pageable);
-  }
+```bash
+bash localenv.sh
 ```
 
-Здесь объект `Pageable` приходит в виде GET параметров с фронта. Spring сам превратит GET параметры в этот объект.
-Также GET параметром может прийти (а может и нет) параметр name. Тогда запрос в БД должен включать фильтрацию по полю
-name (`ContainsIgnoreCase`)
+Или выполнив последовательно команды:
 
-Пример репозитория с запросом к БД с учетом Pageable и name:
+```bash
+docker run --name rcc-mysql -p 3306:3306 \
+  -e MYSQL_ROOT_PASSWORD=secret \
+  -v rcc-volume:/var/lib/mysql \
+  -d mysql:8.4.7
 
-```java
-public interface ArtistRepository extends JpaRepository<ArtistEntity, UUID> {
+docker run --name=zookeeper \
+  -e ZOOKEEPER_CLIENT_PORT=2181 \
+  -p 2181:2181 \
+  -d confluentinc/cp-zookeeper:7.7.7
 
-  @Nonnull
-  Page<ArtistEntity> findAllByNameContainsIgnoreCase(
-          String name,
-          Pageable pageable
-  );
-}
+docker run --name=kafka \
+  -e KAFKA_BROKER_ID=1 \
+  -e KAFKA_ZOOKEEPER_CONNECT=$(docker inspect zookeeper --format='{{ .NetworkSettings.Networks.bridge.IPAddress }}'):2181 \
+  -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+  -e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+  -e KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+  -e KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+  -p 9092:9092 \
+  -d confluentinc/cp-kafka:7.7.7
 ```
 
-Тип `Page<T>` - это ровно то, что ожидает получить фронт. Преобразовать Entity в JSON DTO можно через метод `map()`:
+[Про IP zookeeper](https://github.com/confluentinc/cp-docker-images/issues/801#issuecomment-692085103)
 
-```java
-return artistRepository.findAllByNameContainsIgnoreCase(name, pageable)
-    .map(ArtistJson::fromEntity);
+#### 5. Установить Java версии 21
+
+Это необходимо, т.к. проект использует синтаксис Java 21.
+
+Версию установленной Java необходимо проверить командой `java -version`:
+
+```bash
+java -version
+openjdk version "21.0.1" 2023-10-17 LTS
+OpenJDK Runtime Environment Temurin-21.0.1+12 (build 21.0.1+12-LTS)
+OpenJDK 64-Bit Server VM Temurin-21.0.1+12 (build 21.0.1+12-LTS, mixed mode)
 ```
 
-Почитать про пагинацию дополнительно: https://www.baeldung.com/spring-data-jpa-pagination-sorting
+Если у вас несколько версий Java одновременно — то хотя бы одна из них должна быть 21.  
+Если java не установлена вовсе, то рекомендуется установить OpenJDK (например, с https://adoptium.net/).
 
-###### Передача `Pageable` по gRPC между сервисами, возврат `Page` из сервисов
+#### 6. Установить пакетный менеджер для сборки front-end npm
 
-Если ты выберешь gRPC для взаимодействия между микросервисами, то передача пагинации будет выглядеть так:
+[Инструкция](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).  
+Рекомендованная версия — Node.js - 22.6.0, npm - 10.8.2
 
-Когда с фронта приходит `@PageableDefault Pageable pageable` - из него можно достать две цифры -
-`page` и `size`, плюс опциональный параметр фильтрации (например, `name`). Тогда gRPC сообщение в сервис с художниками
-могло бы выглядеть так:
-
-```protobuf
-message ArtistsRequest {
-  string name = 1;
-  int32 page = 2;
-  int32 size = 3;
-}
-
-message ArtistsResponse {
-  repeated Artist artists = 1;
-  int32 total_count = 2;
-}
+```bash
+node -v && npm -v
+v20.18.0
+10.8.2
 ```
 
-Тогда в gateway можно вернуть на фронт созданный вручную Page:
+---
 
-```java
-            List<ArtistJson> artistJsonList = response.getArtistsList()
-                    .stream()
-                    .map(ArtistJson::fromGrpcMessage)
-                    .toList();
-            return new PageImpl<>(artistJsonList, pageable, response.getTotalCount());
+## Локальный запуск
+
+### 1. Инфраструктура (MySQL + Kafka)
+
+```bash
+bash localenv.sh
 ```
 
-Здесь объект `pageable` - это тот, что мы изначально получили от фронта для выполнения запроса, а
-`response.getTotalCount()`
+### 2. Backend-сервисы
 
-- общее число художников в базе.
+Рекомендуемый порядок:
 
-###### Security config
+```bash
+# Authorization Server
+./gradlew :rcc-auth:bootRun
 
-Необходим доступ без авторизации к эндпойнту `/api/session` и к GET запросам.
-Пример реализации из rcc-api (RococoApiConfiguration):
+# Domain services (можно параллельно)
+./gradlew :rcc-artist:bootRun
+./gradlew :rcc-painting:bootRun
+./gradlew :rcc-museum:bootRun
+./gradlew :rcc-geo:bootRun
+./gradlew :rcc-userdata:bootRun
+./gradlew :rcc-log-kafka-service:bootRun
 
-```java
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    corsCustomizer.apply(http);
-    http.csrf(AbstractHttpConfigurer::disable)
-        .authorizeHttpRequests(customizer ->
-            customizer
-                .requestMatchers(GET, "/api/session").permitAll()
-                .requestMatchers(GET, "/api/artist/**").permitAll()
-                .requestMatchers(GET, "/api/museum/**").permitAll()
-                .requestMatchers(GET, "/api/painting/**").permitAll()
-                .anyRequest().authenticated()
-        )
-        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-    return http.build();
-  }
+# Gateway (после всех downstream)
+./gradlew :rcc-gateway:bootRun
 ```
 
-Все прочие эндпойнты (POST, PATCH, DELETE) требуют авторизацию через JWT токен.
+Либо запускать main-классы из IDE.
 
-В связи с тем, что проект подразумевает GET запросы без авторизации, тесты должны учитывать разные кейсы -
-авторизованный пользователь и нет.
+### 3. Frontend
 
-#### 7. Подготовь структуру тестового фреймворка
-
-Здесь однозначно понадобится возможность API-логина и работы со всеми возможными preconditions проекта - картинами,
-художниками, музеями. Например, было бы хорошо иметь тесты примерно такого вида:
-
-```java
-@Test
-@DisplayName("...")
-@Tag("...")
-@ApiLogin(user = @TestUser)
-@TestMuseum(title = "Музей в Китай", country = "Китай", city = "Пекин")
-void exampleTest(MuseumJson createdMuseum) { ... }
-
-@Test
-@DisplayName("...")
-@TestPainting
-@TestMuseum
-@TestArtist
-@Tag("...")
-void exampleTest2(PaintingJson createdPainting, MuseumJson createdMuseum, ArtistJson createdArtist) { ... }
+```bash
+cd rcc-client
+npm ci
+npm run dev
 ```
 
-Используй существующий rcc-api для понимания API контрактов.
+Фронт будет доступен: [http://localhost:3000](http://localhost:3000)
 
-#### 8. Реализуй достаточное покрытие e2e тестами
+Конфигурация (`.env`):
 
-На наш взгляд, только основных позитивных сценариев тут не менее трех десятков.
-А если не забыть про API-тесты (будь то REST или gRPC), то наберется еще столько же.
+```dotenv
+VITE_AUTH_URL=http://localhost:9000
+VITE_API_URL=http://localhost:8085
+VITE_FRONT_HOST=localhost
+VITE_FRONT_URL=http://localhost:3000
+VITE_CLIENT_ID=client
+```
 
-#### 9. Реализуй запуск тестов в CI pipeline GHA
+### 4. Проверка
 
-И загрузку Allure в учебный Allure Server или GithubPages
+| Сервис        | URL                                                                 |
+|---------------|---------------------------------------------------------------------|
+| Frontend      | http://localhost:3000                                               |
+| Gateway       | http://localhost:8085                                               |
+| Auth          | http://localhost:9000                                               |
+| OpenID Config | http://localhost:9000/.well-known/openid-configuration              |
 
-#### 10. Оформи все красиво!
+GET-запросы к каталогу (artists / museums / paintings / countries) публичные.  
+Создание / изменение / удаление и работа с профилем требуют JWT.
 
-Да, тут еще раз намекну про важность README, важность нарисовать топологию (схему) твоих сервисов, важность скриншотов и
-прочих красот.
-Очень важно думать о том, что если чего-то не будет описано в README, то и проверить я это что-то не смогу.
+---
 
-<img src="rococo.png" width="800">
+## Запуск в Docker
+
+### Полный стек (dev)
+
+```bash
+bash docker-compose-dev.sh
+```
+
+Скрипт:
+
+1. Останавливает старые контейнеры
+2. Собирает backend-образы через Jib
+3. Собирает frontend (`rcc-client`)
+4. Поднимает весь стек через `docker-compose.yml`
+
+После запуска:
+
+| Сервис              | URL                          |
+|---------------------|------------------------------|
+| Frontend            | http://localhost:3000        |
+| Gateway             | http://localhost:8085        |
+| Auth                | http://localhost:9000        |
+| Kafka UI            | http://localhost:8080        |
+
+---
+
+## Тесты
+
+### Unit / Integration (без e2e)
+
+```bash
+./gradlew test -x :rcc-e2e:test
+```
+
+### E2E (Docker + Selenoid + Allure)
+
+Полная пересборка и запуск:
+
+```bash
+bash docker-compose-e2e.sh
+# или с указанием браузера
+bash docker-compose-e2e.sh chrome
+```
+
+Быстрый запуск без пересборки образов:
+
+```bash
+bash docker-compose-e2e-quick.sh
+```
+
+После старта:
+
+| Сервис           | URL                                                                 |
+|------------------|---------------------------------------------------------------------|
+| Selenoid UI      | http://localhost:9099/                                              |
+| Allure UI        | http://localhost:5252/                                              |
+| Allure report    | http://localhost:5050/allure-docker-service/projects/rcc/reports/latest/index.html |
+
+Логи e2e:
+
+```bash
+docker logs -f rcc-e2e
+```
+
+---
+
+## CI / CD
+
+GitHub Actions (`.github/workflows/e2e.yml`):
+
+- Unit & Integration тесты
+- Сборка backend (Jib) + frontend + e2e-образа
+- Запуск e2e в Docker Compose (`profile: test`)
+- Генерация Allure-отчёта и публикация на GitHub Pages
+- Комментарий в PR со ссылкой на отчёт
+
+---
+
+## Структура репозитория
+
+```
+rcc/
+├── rcc-auth/                 # OAuth2 Authorization Server
+├── rcc-gateway/              # API Gateway
+├── rcc-artist/               # Сервис художников
+├── rcc-painting/             # Сервис картин
+├── rcc-museum/               # Сервис музеев
+├── rcc-geo/                  # Справочник стран
+├── rcc-userdata/             # Профили пользователей
+├── rcc-log-kafka-service/    # Kafka consumer логов
+├── rcc-client/               # Frontend (SvelteKit)
+├── rcc-e2e/                  # E2E / UI / gRPC / Kafka тесты
+├── docker-compose.yml
+├── docker-compose-dev.sh
+├── docker-compose-e2e.sh
+├── docker-compose-e2e-quick.sh
+├── localenv.sh
+├── settings.gradle
+├── build.gradle
+└── README.md
+```
+
+---
+
+## Технологический стек
+
+**Backend**
+
+- Java 21
+- Spring Boot 4.x
+- Spring Security (OAuth 2.0 Resource Server / Authorization Server)
+- Spring Data JPA + Flyway
+- MySQL 8
+- gRPC + Protobuf
+- Spring Kafka
+- Lombok
+- Google Jib (Docker-образы)
+
+**Тесты**
+
+- JUnit 5
+- Selenide + Selenoid
+- Allure
+- gRPC-тесты
+- Kafka consumers
+- AShot (screenshot comparison)
