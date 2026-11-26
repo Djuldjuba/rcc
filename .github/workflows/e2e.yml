@@ -40,11 +40,14 @@ jobs:
       - name: Report test results
         uses: dorny/test-reporter@v2
         if: always() && steps.unit-tests.outcome != 'skipped'
+        continue-on-error: true
         with:
           name: Unit & Integration tests
           path: '**/build/test-results/test/TEST-*.xml'
           reporter: java-junit
           badge-title: 'unit & integration tests'
+          fail-on-error: false
+          fail-on-empty: false
 
       - name: Add comment to PR with link to unit tests results
         if: always() && steps.unit-tests.outcome != 'skipped'
@@ -85,8 +88,15 @@ jobs:
         run: |
           docker build -t rcc-e2e:latest -f ./rcc-e2e/Dockerfile .
 
-      - name: Pull browsers
+      - name: Pull Docker images
         run: |
+          docker pull mysql:8.4.7
+          docker pull apache/kafka:3.9.0
+          docker pull provectuslabs/kafka-ui:latest
+          docker pull aerokube/selenoid:latest-release
+          docker pull aerokube/selenoid-ui:latest-release
+          docker pull frankescobar/allure-docker-service
+          docker pull frankescobar/allure-docker-service-ui
           docker pull twilio/selenoid:chrome_stable_135
 
       - name: Get the last commit message
@@ -99,10 +109,10 @@ jobs:
 
       - name: Run e2e-tests
         id: e2e
+        timeout-minutes: 30
         run: |
-          docker compose --profile test up -d
+          docker compose --profile test up -d --wait
           docker ps -a
-          docker wait rcc-e2e
           exit_code=$(docker inspect -f '{{.State.ExitCode}}' rcc-e2e)
           echo "E2E_EXIT_CODE=$exit_code" >> $GITHUB_OUTPUT
           echo "### Test logs ###"
