@@ -81,6 +81,10 @@ jobs:
         run: |
           docker build -t rcc-client:latest ./rcc-client
 
+      - name: Build e2e image
+        run: |
+          docker build -t rcc-e2e:latest -f ./rcc-e2e/Dockerfile .
+
       - name: Pull browsers
         run: |
           docker pull twilio/selenoid:chrome_stable_147
