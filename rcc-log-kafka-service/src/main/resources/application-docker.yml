@@ -1,0 +1,29 @@
+server:
+  port: 8092
+
+spring:
+  application:
+    name: rcc-log-kafka-service
+  datasource:
+    url: jdbc:mysql://rcc-mysql:3306/rcc_logs?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: root
+    password: secret
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    schemas: rcc_logs
+  kafka:
+    bootstrap-servers: 'rcc-kafka:9092'
+    consumer:
+      group-id: rcc-log-kafka-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        spring.json.trusted.packages: 'io.student.rcc.logkafka.kafka'
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: io.student.rcc.logkafka.kafka.LogEvent

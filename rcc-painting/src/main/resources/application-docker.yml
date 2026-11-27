@@ -1,0 +1,38 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: rcc-painting
+  datasource:
+    url: jdbc:mysql://rcc-mysql:3306/rcc_painting?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: root
+    password: secret
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    schemas: rcc_painting
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: 'http://rcc-auth:9000/oauth2/jwks'
+
+grpc:
+  server:
+    port: 9091
+    max-inbound-message-size: 20971520
+    security:
+      enabled: false
+
+  client:
+    artist:
+      address: 'static://rcc-artist:9090'
+      negotiation-type: plaintext
+    museum:
+      address: 'static://rcc-museum:9093'
+      negotiation-type: plaintext

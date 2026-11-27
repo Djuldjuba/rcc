@@ -1,0 +1,6 @@
+io.student.rococo.jupiter.extensions.DatabaseExtension
+io.student.rococo.jupiter.extensions.BrowserExtension
+io.student.rococo.jupiter.extensions.KafkaExtension
+io.student.rococo.jupiter.extensions.AllureSuiteExtension
+io.student.rococo.jupiter.extensions.TestDataExtension
+io.qameta.allure.junit5.AllureJunit5

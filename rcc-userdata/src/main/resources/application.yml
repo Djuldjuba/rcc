@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: rcc-userdata
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/rcc_userdata?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: root
+    password: secret
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    schemas: rcc_userdata
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: 'http://localhost:9000'
+
+  kafka:
+    bootstrap-servers: 'localhost:9092'
+    consumer:
+      group-id: rcc-userdata
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        spring.json.trusted.packages: 'io.student.rcc.userdata.kafka'
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: io.student.rcc.userdata.kafka.UserRegisteredEvent
+
+grpc:
+  server:
+    port: 9095
+    security:
+      enabled: false
+
+server:
+  port: 8090
+
+logging:
+  level:
+    root: INFO
+    io.student.rcc: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate.internal.util.EntityPrinter: WARN

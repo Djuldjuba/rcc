@@ -1,4 +1,11 @@
 rootProject.name = 'rcc'
-include 'rcc-api'
 include 'rcc-auth'
 include 'rcc-e2e'
+
+include 'rcc-artist'
+include 'rcc-gateway'
+include 'rcc-painting'
+include 'rcc-geo'
+include 'rcc-museum'
+include 'rcc-userdata'
+include 'rcc-log-kafka-service'

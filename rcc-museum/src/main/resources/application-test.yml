@@ -1,0 +1,37 @@
+spring:
+  flyway:
+    enabled: false
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:rcc-museum;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+
+  jpa:
+    generate-ddl: true
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create
+    open-in-view: false
+    show-sql: false
+
+grpc:
+  server:
+    port: 0
+    max-inbound-message-size: 20971520
+    security:
+      enabled: false
+
+  client:
+    country:
+      address: 'static://localhost:19094'
+      negotiation-type: plaintext
+
+logging:
+  level:
+    root: WARN

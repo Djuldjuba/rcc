@@ -1,0 +1,59 @@
+spring:
+  application:
+    name: rcc-museum
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/rcc_museum?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    username: root
+    password: secret
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    defer-datasource-initialization: false
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    generate-ddl: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    schemas: rcc_museum
+    locations: classpath:db/migration
+    table: flyway_schema_history
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: 'http://localhost:9000/oauth2/jwks'
+
+grpc:
+  server:
+    port: 9093
+    max-inbound-message-size: 20971520
+    security:
+      enabled: false
+
+  client:
+    country:
+      address: 'static://localhost:9094'
+      negotiation-type: plaintext
+
+logging:
+  level:
+    root: INFO
+    org.flywaydb: DEBUG
+    org.springframework.boot.autoconfigure.flyway: DEBUG
+    org.hibernate.SQL: DEBUG
+    io.student.rcc.museum: DEBUG
+    org.hibernate.internal.util.EntityPrinter: WARN
+
+server:
+  port: 8088

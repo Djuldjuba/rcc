@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package io.student.rcc.museum;
+
+option java_multiple_files = true;
+option java_package = "io.student.rcc.museum.grpc";
+option java_outer_classname = "MuseumProto";
+
+service MuseumService {
+  rpc GetMuseum(GetMuseumRequest) returns (MuseumResponseProto);
+  rpc GetAllMuseums(EmptyRequest) returns (MuseumListResponseProto);
+  rpc CreateMuseum(CreateMuseumRequestProto) returns (MuseumResponseProto);
+  rpc UpdateMuseum(UpdateMuseumRequestProto) returns (MuseumResponseProto);
+  rpc DeleteMuseum(DeleteMuseumRequest) returns (EmptyResponse);
+  rpc SearchMuseums(SearchRequest) returns (MuseumListResponseProto);
+  rpc GetMuseumsByCountry(GetMuseumsByCountryRequest) returns (MuseumListResponseProto);
+}
+
+message EmptyRequest {}
+message EmptyResponse {}
+
+message GetMuseumRequest {
+  string id = 1;
+}
+
+message DeleteMuseumRequest {
+  string id = 1;
+}
+
+message GetMuseumsByCountryRequest {
+  string countryId = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message CreateMuseumRequestProto {
+  string title = 1;
+  string description = 2;
+  string photo = 3;
+  string city = 4;
+  string countryId = 5;
+}
+
+message UpdateMuseumRequestProto {
+  string id = 1;
+  optional string title = 2;
+  optional string description = 3;
+  optional string photo = 4;
+  optional string city = 5;
+  optional string countryId = 6;
+}
+
+message SearchRequest {
+  string title = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message MuseumResponseProto {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string photo = 4;
+  string city = 5;
+  string countryId = 6;
+  string countryName = 7;
+}
+
+message MuseumListResponseProto {
+  repeated MuseumResponseProto museums = 1;
+  int32 totalPages = 2;
+  int64 totalElements = 3;
+}

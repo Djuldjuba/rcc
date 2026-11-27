@@ -74,13 +74,23 @@ spring:
     show-sql: false
     generate-ddl: false
     open-in-view: false
+  kafka:
+    bootstrap-servers: 'localhost:9092'
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      acks: all
+      retries: 3
 
 logging:
+  file:
+    path: ./logs/rcc-auth
   level:
     root: INFO
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
     org.springframework.security.oauth2: DEBUG
+    org.springframework.kafka: INFO
 
 rococo-front:
   base-uri: 'http://localhost:3000'

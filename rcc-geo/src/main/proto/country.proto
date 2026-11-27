@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package io.student.rcc.geo.proto;
+
+option java_package = "io.student.rcc.geo.proto";
+option java_outer_classname = "CountryProto";
+
+service CountryService {
+  rpc GetAllCountries (GetAllCountriesRequest) returns (GetAllCountriesResponse);
+  rpc GetCountryById (GetCountryByIdRequest) returns (Country);
+  rpc GetCountryByName (GetCountryByNameRequest) returns (Country);
+}
+
+message GetAllCountriesRequest {
+  string name = 1;
+  int32 page = 2;
+  int32 size = 3;
+}
+
+message GetAllCountriesResponse {
+  repeated Country countries = 1;
+  int32 totalPages = 2;
+  int64 totalElements = 3;
+  int32 page = 4;
+  int32 size = 5;
+}
+
+message GetCountryByIdRequest {
+  string id = 1;
+}
+
+message GetCountryByNameRequest {
+  string name = 1;
+}
+
+message Country {
+  string id = 1;
+  string name = 2;
+}
